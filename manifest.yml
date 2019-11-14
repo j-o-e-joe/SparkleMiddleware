@@ -1,0 +1,7 @@
+---
+applications:
+ - name: GIA Autoplot
+   random-route: true
+   memory: 256M
+   services:
+   - GIA_CloudantDB
