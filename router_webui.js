@@ -15,25 +15,23 @@ const upload = multer({ storage });
 var db = cloudant_data.initDBConnection();
 var router = express.Router();
 
-function additemtodatastore(bucketname, cisgouser, cisgodevice, cisgotimestamp, fileitem) {
+function additemtodatastore(bucketname, fileitem, cisgotimestamp, controlnumber) {
     return new Promise((resolve, reject)=>{
-        s3_data.addItemToStorage(bucketname, cisgotimestamp, fileitem.controlnumber, fileitem.protocol, fileitem.filename, fileitem.data)
+        s3_data.addItemToStorage(bucketname, cisgotimestamp, controlnumber, fileitem.protocol, fileitem.filename, fileitem.data)
         .then(() => { 
-            var cisgoitem = new Object();
-            cisgoitem.bucketname = bucketname;
-            cisgoitem.cisgotimestamp = cisgotimestamp;
-            cisgoitem.cisgousername = cisgouser;
-            cisgoitem.cisgodevice = cisgodevice;
-            cisgoitem.controlnumber = fileitem.controlnumber;
-            cisgoitem.protocol = fileitem.protocol;
-            cisgoitem.filepath = cisgotimestamp + "/" + fileitem.protocol + "/" + fileitem.filename;
-            cisgoitem.sparkleprocessed = false;
-            cloudant_data.addItemToCloudantDB(db, cisgoitem).then(()=>{
-                resolve()
-            }).catch((e)=>{
-                console.log(e)
-                reject(e)
-            });
+           resolve()
+        }).catch((e) => { 
+            console.log(e)
+            reject(e)
+        }); 
+    })
+}
+
+function removeitemfromdatastore(bucketname, fileitem, cisgotimestamp, controlnumber) {
+    return new Promise((resolve, reject)=>{
+        s3_data.removeItemFromStorage(bucketname, cisgotimestamp, controlnumber, fileitem.protocol, fileitem.filename, fileitem.data)
+        .then(() => { 
+           resolve()
         }).catch((e) => { 
             console.log(e)
             reject(e)
@@ -69,38 +67,86 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
         request(options, callback)
     });
 }
-async function processrequests(filemap, cisgouser, cisgodevice, cisgotimestamp) {
+async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser, cisgodevice) {
     return new Promise(async (resolve, reject)=>{
-        var sparklecloudantpromises = []
-        var controlnumbers = []
-        for (var [key, value] of filemap) {
-            if (value.length != 3) {
-                reject(new Error("Invalid Input!"))
-                return;
-            }
-
-            controlnumbers.push(value[0].controlnumber)
-            await additemtodatastore("cisgo", cisgouser, cisgodevice, cisgotimestamp, value[0]).then(()=>{}).catch((e)=>{
-                reject(e)
-                return
-            });
-            await additemtodatastore("cisgo", cisgouser, cisgodevice, cisgotimestamp, value[1]).then(()=>{}).catch((e)=>{
-                reject(e)
-                return
-            });
-            await additemtodatastore("cisgo", cisgouser, cisgodevice, cisgotimestamp, value[2]).then(()=>{}).catch((e)=>{
-                reject(e)
-                return
-            });
-            sparklecloudantpromises.push(runsparkleprocessing(value[0].controlnumber, cisgotimestamp));
-        }
         
-        Promise.all(sparklecloudantpromises).then(()=>{
-            resolve(controlnumbers)
-        }).catch((e)=>{
+        var a_crown_wireframe = filemap.get('a_crown');
+        var b_crown_high = filemap.get('b_crown_high');
+        var b_crown_low = filemap.get('b_crown_low');
+      
+        additemtodatastore("cisgo", a_crown_wireframe, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+            reject(e)
+            return
+        });
+        additemtodatastore("cisgo", b_crown_high, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+            removeitemfromdatastore("cisgo", b_crown_high, cisgotimestamp, controlnumber).then(()=>{
+                reject(e)
+            }).catch((e)=>{
+                reject(e)
+            });
+            return
+        });
+        additemtodatastore("cisgo", b_crown_low, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+            removeitemfromdatastore("cisgo", b_crown_low, cisgotimestamp, controlnumber).then(()=>{
+                reject(e)
+            }).catch((e)=>{
+                reject(e)
+            });
+            return
+        });
+
+      
+        var a_crown_item = new Object();
+        a_crown_item.bucketname = "cisgo";
+        a_crown_item.cisgotimestamp = cisgotimestamp;
+        a_crown_item.cisgousername = cisgouser;
+        a_crown_item.cisgodevice = cisgodevice;
+        a_crown_item.controlnumber = controlnumber;
+        a_crown_item.protocol = a_crown_wireframe.protocol;
+        a_crown_item.filepath = cisgotimestamp + "/" + a_crown_wireframe.protocol + "/" + a_crown_wireframe.filename;
+        a_crown_item.sparkleprocessed = false;
+        cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
+        }).catch((e)=>{ 
             reject(e)
         })
-     });
+        
+
+        var b_high_item = new Object();
+        b_high_item.bucketname = "cisgo";
+        b_high_item.cisgotimestamp = cisgotimestamp;
+        b_high_item.cisgousername = cisgouser;
+        b_high_item.cisgodevice = cisgodevice;
+        b_high_item.controlnumber = controlnumber;
+        b_high_item.protocol = b_crown_high.protocol;
+        b_high_item.filepath = cisgotimestamp + "/" + b_crown_high.protocol + "/" + b_crown_high.filename;
+        b_high_item.sparkleprocessed = false;
+        cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
+        }).catch((e)=>{ 
+            reject(e)
+        })
+
+        var b_low_item = new Object();
+        b_low_item.bucketname = "cisgo";
+        b_low_item.cisgotimestamp = cisgotimestamp;
+        b_low_item.cisgousername = cisgouser;
+        b_low_item.cisgodevice = cisgodevice;
+        b_low_item.controlnumber = controlnumber;
+        b_low_item.protocol = b_crown_low.protocol;
+        b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
+        b_low_item.sparkleprocessed = false;
+
+        cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
+            runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
+            resolve(controlnumber)
+        }).catch((e)=>{ 
+            reject(e)
+        })
+
+        }).catch((e)=>{
+            console.log(e)
+            reject(e)
+        });
+    });
 }
 
 // Web APIs
@@ -132,11 +178,12 @@ router.post('/api/setitemcontents',
         return
     }
 
+    var controlnumber = req.body.control;
+    var cisgotimestamp = new Date(new Date().toUTCString()).toISOString();
     var cisgouser = req.body.cisgouser;
     var cisgodevice = req.body.cisgodevice;
-    var filebody = req.file.buffer;
-    var cisgotimestamp = new Date(new Date().toUTCString()).toISOString();
    
+    var filebody = req.file.buffer;
     var zip = new AdmZip(filebody);
     var zipEntries = zip.getEntries();
     
@@ -151,77 +198,60 @@ router.post('/api/setitemcontents',
                 
                 var components = entryname.split('_');
                 if (components.length > 2) {
-                    var fileitem = new Object();
-                    fileitem.controlnumber = components[0];
+                   
                     if (components[1] === "A") {
+                        var fileitem = new Object();
+                        fileitem.controlnumber = components[0];
                         fileitem.protocol = "A_Crown_Wireframe" 
+                        fileitem.filename = entryname
+                        fileitem.data = data;
+                        filemap.set('a_crown', fileitem);
                     } else if (components[1] === "B") {
-                        fileitem.protocol = "B_Crown_Clarity" 
-                    } else {
-                        continue;
-                    }
-
-                    fileitem.filename = entryname
-                    fileitem.data = data;
-                    var array = filemap.get(components[0])
-                    if (array == null) {
-                        array = [fileitem]
-                    } else {
-                        array.push(fileitem)
-                    }
-                    filemap.set(components[0], array);
+                        if (components[components.length - 1].includes('Low')) {
+                            var fileitem = new Object();
+                            fileitem.controlnumber = components[0];
+                            fileitem.protocol = "B_Crown_Clarity" 
+                            fileitem.filename = entryname
+                            fileitem.data = data;
+                            filemap.set('b_crown_low', fileitem);
+    
+                        } else if (components[components.length - 1].includes('High')) {
+                            var fileitem = new Object();
+                            fileitem.controlnumber = components[0];
+                            fileitem.protocol = "B_Crown_Clarity" 
+                            fileitem.filename = entryname
+                            fileitem.data = data;
+                            filemap.set('b_crown_high', fileitem);
+                        }
+                    } 
                 }
             } 
         }
     }
-    await processrequests(filemap, cisgouser, cisgodevice, cisgotimestamp).then((controlnumbers)=>{
-        res.write(controlnumbers.join(','));
+    if (filemap.get('a_crown') === undefined) {
+        res.write('Invalid input: A Crown Wireframe not found!');
+        res.end();
+        return
+    }
+    if (filemap.get('b_crown_low') === undefined) {
+        res.write('Invalid input: B Crown Low not found!');
+        res.end();
+        return
+    }
+    if (filemap.get('b_crown_high') === undefined) {
+        res.write('Invalid input: A Crown High not found!');
+        res.end();
+        return
+    }
+
+    await processrequests(filemap, controlnumber, cisgotimestamp, cisgouser, cisgodevice).then((controlnumbers)=>{
+        res.write(controlnumber);
         res.end();
     }).catch((e)=>{
         res.write(`ERROR: ${e.code} - ${e.message}\n`);
         res.end();
     })
 });
-
-
-router.get('/api/reprocesscisgoitem', 
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) {
-        var controlnumber = req.query.controlnumber;
-        var sparklecloudantpromises = []
-        var sparklefilepaths = []
-        cloudant_data.getSparkleCloudantItems(db, controlnumber).then((rows) =>{
-            for (var i = 0; i < rows.length; i++) {
-                var docid = rows[i].value._id
-                var fpath = controlnumber + '/' + rows[i].value.filepath
-                console.log(fpath)
-                sparklefilepaths.push( { "Key": fpath })
-                sparklecloudantpromises.push(cloudant_data.removeItemByIdFromCloudantDB(db, docid))
-            }
-        }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
-            res.end();
-        })
-
-        Promise.all(sparklecloudantpromises).then(()=>{
-            s3_data.removeItemsFromStorage("sparkletableprocessing", sparklefilepaths).then(()=>{
-                console.log("success")
-                res.write("success");
-                res.end();
-            }).catch((e)=>{
-                console.log(e)
-                res.write('ERROR: ${e.code} - ${e.message}\n');
-                res.end();
-            })
-        }).catch((e)=>{
-            console.log(e)
-            res.write('ERROR: ${e.code} - ${e.message}\n');
-            res.end();
-        })
-    }
-);
 
 router.get('/api/deleteitem', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
@@ -232,7 +262,6 @@ router.get('/api/deleteitem',
         var bucketname = req.query.bucketname;
         var filepath = req.query.filepath;
         cloudant_data.removeItemByIdFromCloudantDB(db, docid).then(() => {
-            console.log(filepath)
             s3_data.removeItemFromStorage(bucketname, filepath).then(()=>{
                 res.write("success");
                 res.end();
@@ -277,7 +306,7 @@ router.get('/api/getcisgoitems',
             for (var i = 0; i < rows.length; i++) {
                 var ctrlnumber = rows[i].value.controlnumber
                 var v = crows.find(e => e.value.controlnumber === ctrlnumber);
-                if (v) {
+                if (v != undefined) {
                     v.value.sparkleprocessed += '<br/>' + rows[i].value.sparkleprocessed;
                     v.value.protocol += '<br/>' + rows[i].value.protocol;
                     v.value.fileanchor += "<br/><a href='/api/getobject?bucketname=cisgo&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"

@@ -17,6 +17,7 @@
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "express-session": "^1.16.1",
+    "fs": "0.0.1-security",
     "ibm-cos-sdk": "^1.4.5",
     "ibmcloud-appid": "^6.0.0",
     "multer": "^1.4.1",

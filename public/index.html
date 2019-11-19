@@ -30,9 +30,9 @@
                         <div class="col-md-5">
                             <table class="table">
                                 <tbody>
-                                    <tr><td><a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/gia/manifest.plist">Install Autoplot GIA 0.0.17</a>
+                                    <tr><td><a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/gia/manifest.plist">Install Autoplot GIA 0.0.18</a>
                                     </td></tr>
-                                    <tr><td> <a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/testapps/manifest.plist">Install Autoplot IBM 0.0.17</a>
+                                    <tr><td> <a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/testapps/manifest.plist">Install Autoplot IBM 0.0.18</a>
                                     </td></tr>
                                 </tbody>
                             </table>
@@ -67,6 +67,7 @@
                             <form action="/api/setitemcontents" id="uploadform" enctype="multipart/form-data" method="POST">
                                 <table class="table">
                                     <tbody>
+                                    <tr><td colSpan="1"><p class="font-weight-bold">Control Number</p></td><td colSpan="3"><input type="text" id="control" name="control" value=""/></td></tr>
                                     <tr>
                                         <td colSpan="1"><p class="font-weight-bold">Files</p></td><td colspan="3">
                                             <input type="file" id="image" name="file" accept="application/zip"> 
@@ -177,7 +178,7 @@
                         var rows = [];
                         rows.push("<tr><th></th><th>Username</th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Table Timestamp</th><th>Plot Timestamp</th><th>Device</th><th>Grade Processed</th><th>Model Version</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"delete-plot-item\" id=\"" + object.value._id + "&bucketname=csplots&filepath=" +  object.value.filepath + "\" value=\"Delete\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-plot-item\" id=\"" + object.value._id + "&bucketname=csplots&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.plotusername
                                                     + "</td><td>" + object.value.controlnumber
                                                     + "</td><td>" + object.value.cisgotimestamp 
@@ -369,7 +370,6 @@
                     e.preventDefault();    
                     $("#loadingimg").show();
                     var formData = new FormData(this);
-
                     $.ajax({
                         url: "/api/setitemcontents",
                         type: 'POST',
