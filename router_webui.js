@@ -386,6 +386,24 @@ router.get('/api/getsparkletableitems',
     }
 );
 
+router.get('/api/getreportitems', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        var controlnumber = req.query.controlnumber;
+        cloudant_data.getReportCloudantItems(db, controlnumber).then((rows) =>{
+            var item = new Object();
+            item.rows = rows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.end();
+        })
+    }
+);
+
 router.get('/api/getobject',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false

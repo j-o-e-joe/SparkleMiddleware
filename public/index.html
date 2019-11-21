@@ -117,6 +117,13 @@
                                 <table class='table' id="grades"></table>
                             </div>
                         </div>
+                        <hr>
+                        <div class="row">
+                                <div class="col-md-5">
+                                    <h4 class="display-5">GIA Provided Data</h4>
+                                    <table class='table' id="reports"></table>
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -219,6 +226,28 @@
                                         + "</td></tr>");
                         });
                         $("#grades").append(rows.join(""));
+                    });
+                }
+                function get_report_items(controlnumber) {
+                  $("#reports").empty();
+                  $.get("/api/getreportitems?controlnumber=" + controlnumber, function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th>Username</th><th>Time Stamp</th><th>Control Number</th><th>Color</th><th>Polish</th><th>Cut</th><th>Symmetry</th><th>Fluorescence</th><th>Clarity</th><th>Comments</th>");  
+                        $.each(obj.rows, function(index, object) {
+                          rows.push("<tr><td>" + object.value.user 
+                                        + "</td><td>" + object.value._id
+                                        + "</td><td>" + object.value.controlnumber
+                                        + "</td><td>" + object.value.color
+                                        + "</td><td>" + object.value.polish
+                                        + "</td><td>" + object.value.cut
+                                        + "</td><td>" + object.value.symmetry
+                                        + "</td><td>" + object.value.fluorescence
+                                        + "</td><td>" + object.value.clarity
+                                        + "</td><td>" + object.value.comments
+                                        + "</td></tr>");
+                        });
+                        $("#reports").append(rows.join(""));
                     });
                 }
 
@@ -327,6 +356,7 @@
                         get_cisgo_items(filterbytext)
                         get_plot_items(filterbytext)
                         get_grade_items(filterbytext)
+                        get_report_items(filterbytext)
                     }, false);
 
                     $(document).on('click', "input.reprocess-item", function () {
@@ -335,6 +365,7 @@
                             get_cisgo_items(filterbytext)
                             get_plot_items(filterbytext)
                             get_grade_items(filterbytext)
+                            get_report_items(filterbytext)
                         });
                     });
 
