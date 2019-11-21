@@ -4,7 +4,7 @@ module.exports = {
     getDBCredentialsUrl: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {
-            if (vcapService.match(/cloudant/i)) {
+            if (vcapService.match(/cloudantNoSQLDB/i)) {
                 return vcapServices[vcapService][0].credentials.url;
             }
         }
@@ -13,25 +13,16 @@ module.exports = {
     getCosCredentials: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {
-            if (vcapService.match(/cos/i)) {
+            if (vcapService.match(/cloud-object-storage/i)) {
                 return vcapServices[vcapService][0].credentials;
             }
         }
     },
     
-    getWebAppStrategy: function (jsonData) {
+    getAppIDCredentials: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {
-            if (vcapService.match(/webappstrategy/i)) {
-                return vcapServices[vcapService][0].credentials;
-            }
-        }
-    },
-    
-    getApiStrategy: function (jsonData) {
-        var vcapServices = JSON.parse(jsonData);
-        for (var vcapService in vcapServices) {
-            if (vcapService.match(/apistrategy/i)) {
+            if (vcapService.match(/AppID/i)) {
                 return vcapServices[vcapService][0].credentials;
             }
         }
@@ -54,7 +45,14 @@ module.exports = {
             }
         }
     },
-    
+    getServerAuth3: function (jsonData) {
+        var vcapServices = JSON.parse(jsonData);
+        for (var vcapService in vcapServices) {
+            if (vcapService.match(/serverauth3/i)) {
+                return vcapServices[vcapService][0].credentials;
+            }
+        }
+    },
     getSession: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {

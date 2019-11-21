@@ -20,8 +20,19 @@ app.use(passport.session());
 passport.serializeUser((user, cb) => cb(null, user));
 passport.deserializeUser((user, cb) => cb(null, user));
 
-passport.use(new WebAppStrategy(config.getWebAppStrategy(fs.readFileSync("vcap-local.json", "utf-8"))));
-passport.use(new APIStrategy(config.getApiStrategy(fs.readFileSync("vcap-local.json", "utf-8"))));
+
+var appid = config.getAppIDCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
+
+passport.use(new WebAppStrategy({
+"tenantId": appid.tenantId,
+"clientId": appid.clientId,
+"secret": appid.secret,
+"oAuthServerUrl": appid.oauthServerUrl,
+"redirectUri": "https://gia-autoplot.mybluemix.net/appid/callback"
+}));
+passport.use(new APIStrategy({
+"oAuthServerUrl": appid.oauthServerUrl   
+}));
 
 app.use('/', router_webui);
 app.use('/', router_ipad);

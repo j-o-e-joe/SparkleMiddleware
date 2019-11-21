@@ -37,6 +37,22 @@ module.exports = {
             
         })
     },
+    addTrainingToStorage: function(bucketname, trainingtimestamp, filename, filebody) {
+        return new Promise((resolve, reject)=>{
+            cos.putObject({
+                Bucket: bucketname, 
+                Key: trainingtimestamp + "/" + filename, 
+                Body: filebody
+            }).promise()
+            .then(() => {
+                resolve();
+            })
+            .catch((e) => {
+                reject(e)
+            });
+            
+        })
+    },
     removeItemFromStorage: function(bucketname, filepath) {
         return new Promise((resolve, reject)=>{
             cos.deleteObject(

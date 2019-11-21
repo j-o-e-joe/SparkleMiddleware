@@ -67,6 +67,35 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
         request(options, callback)
     });
 }
+var serverauth3 = config.getServerAuth3(fs.readFileSync("vcap-local.json", "utf-8"))
+function runsparkletraining(trainingtimestamp) {
+    return new Promise((resolve, reject)=>{
+        var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
+        const options = {
+            url: serverauth3.url + 'starttrainingsession?trainingtimestamp='+ trainingtimestamp,
+            headers: {
+            'Authorization' : auth
+            },
+            agentOptions: {
+                ca: fs.readFileSync('nginx-selfsigned-3.crt', {encoding: 'utf-8'}),
+                checkServerIdentity: function (host, cert) {
+                    return undefined;
+                }
+            }
+        };
+
+        function callback(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                resolve(body);
+            } else { 
+                reject(error);
+            }
+        }
+        request(options, callback)
+        
+    });
+}
+
 async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser, cisgodevice) {
     return new Promise(async (resolve, reject)=>{
         
@@ -143,7 +172,6 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         })
 
         }).catch((e)=>{
-            console.log(e)
             reject(e)
         });
     });
@@ -165,6 +193,71 @@ router.get('/appid/logout', function(req, res) {
     WebAppStrategy.logout(req);
     res.redirect('https://us-south.appid.cloud.ibm.com/oauth/v4/153281e8-9e03-40ec-93a1-0e5b2be7ef68')
 });
+
+router.post('/api/runningtraining', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    upload.array('files'), (req, res) => {
+    
+        if (req.files == undefined) {
+            res.write("Invalid Input!")
+            res.end()
+            return
+        }
+
+        var bucketname = "sparkletraining"
+        var testfile = undefined
+        var trainingfile = undefined
+        var trainingtimestamp = new Date(new Date().toUTCString()).toISOString();
+        var promises = [];
+
+        for (var i = 0; i < req.files.length; i++) {
+            var filename = req.files[i].originalname;
+            var filebody = req.files[i].buffer;
+            if (filename.toLowerCase().includes('test')) {
+                testfile = filename
+                promises.push(s3_data.addTrainingToStorage(bucketname, trainingtimestamp, testfile, filebody))
+            } 
+            if (filename.toLowerCase().includes('training')) {
+                trainingfile = filename
+                promises.push(s3_data.addTrainingToStorage(bucketname, trainingtimestamp, trainingfile, filebody))
+            }
+        }
+
+        if (testfile == undefined || trainingfile == undefined) {
+            res.write("Invalid Input!")
+            res.end()
+            return
+        }
+
+        Promise.all(promises)    
+        .then(() => { 
+                var trainingitem = new Object();
+                trainingitem.bucketname = bucketname;
+                trainingitem.testfile = testfile;
+                trainingitem.trainingfile = trainingfile;
+                trainingitem.trainingtimestamp = trainingtimestamp;
+                cloudant_data.addItemToCloudantDB(db, trainingitem).then(()=>{
+                    //runsparkletraining(trainingtimestamp).then(()=>{
+                        res.write("Success");
+                        res.end();
+                    // }).catch((e)=>{
+                    //     res.write(`ERROR: ${e.code} - ${e.message}\n`);
+                    //     res.end();
+                    // })
+                }).catch((e) => {
+                    res.write(`ERROR: ${e.code} - ${e.message}\n`);
+                    res.end();
+                })
+        })
+        .catch((e) => { 
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        });   
+    }
+   
+);
 
 router.post('/api/setitemcontents', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
@@ -267,13 +360,12 @@ router.get('/api/deleteitem',
                 res.end();
             })
             .catch((e) => {
-                console.log(e)
-                res.write('ERROR: ${e.code} - ${e.message}\n');
+                res.write(`ERROR: ${e.code} - ${e.message}\n`);
                 res.end();
             });
         }).catch((e)=>{
             console.log(e)
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }
@@ -289,7 +381,7 @@ router.get('/api/deletedbitem',
             res.write("success");
             res.end();
         }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }
@@ -320,7 +412,7 @@ router.get('/api/getcisgoitems',
             res.json(item);
             res.end();
         }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }
@@ -343,7 +435,7 @@ router.get('/api/getplotitems',
             res.json(item);
             res.end();
         }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }
@@ -361,7 +453,7 @@ router.get('/api/getgradeitems',
             res.json(item);
             res.end();
         }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }
@@ -380,7 +472,25 @@ router.get('/api/getsparkletableitems',
             res.json(item);
             res.end();
         }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/getreportitems', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        var controlnumber = req.query.controlnumber;
+        cloudant_data.getReportCloudantItems(db, controlnumber).then((rows) =>{
+            var item = new Object();
+            item.rows = rows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }
@@ -398,7 +508,7 @@ router.get('/api/getobject',
             res.write(data.Body, 'binary');
             res.end(null, 'binary');
         }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
         })
     }

@@ -83,6 +83,28 @@
                     </div>
                 </div>
             </div>
+
+            <div class="jumbotron">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h3 class="display-4">Training Upload (DO NOT USE!)</h3>
+                            <form action="/api/runningtraining" id="trainingform" enctype="multipart/form-data" method="POST">
+                                <table class="table">
+                                    <tbody>
+                                    <tr>
+                                        <td colSpan="1"><p class="font-weight-bold">Training/Test Data</p></td><td colspan="3">
+                                            <input type="file" id="image" name="files" multiple="multiple" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
+                                        </td>
+                                    </tr>
+                                    <tr><td><img id="trainingimg" width="26" height="26" src="loading.gif" alt="loading..." /></td><td colSpan="4"><input id="submit-all" ref="btn" type="submit" value="Submit"/></td></tr>
+                                    </tbody>
+                                </table>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="jumbotron">
                     <div class="container">
@@ -116,6 +138,13 @@
                                 <h4 class="display-5">Predicted Grades</h4>
                                 <table class='table' id="grades"></table>
                             </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                                <div class="col-md-5">
+                                    <h4 class="display-5">GIA Provided Data</h4>
+                                    <table class='table' id="reports"></table>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -221,6 +250,28 @@
                         $("#grades").append(rows.join(""));
                     });
                 }
+                function get_report_items(controlnumber) {
+                  $("#reports").empty();
+                  $.get("/api/getreportitems?controlnumber=" + controlnumber, function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th>Username</th><th>Time Stamp</th><th>Control Number</th><th>Color</th><th>Polish</th><th>Cut</th><th>Symmetry</th><th>Fluorescence</th><th>Clarity</th><th>Comments</th>");  
+                        $.each(obj.rows, function(index, object) {
+                          rows.push("<tr><td>" + object.value.user 
+                                        + "</td><td>" + object.value._id
+                                        + "</td><td>" + object.value.controlnumber
+                                        + "</td><td>" + object.value.color
+                                        + "</td><td>" + object.value.polish
+                                        + "</td><td>" + object.value.cut
+                                        + "</td><td>" + object.value.symmetry
+                                        + "</td><td>" + object.value.fluorescence
+                                        + "</td><td>" + object.value.clarity
+                                        + "</td><td>" + object.value.comments
+                                        + "</td></tr>");
+                        });
+                        $("#reports").append(rows.join(""));
+                    });
+                }
 
                 // Health check function for Transporter
                 function get_service_status() {
@@ -309,6 +360,7 @@
                         $("#user").text(resp.user.name);
                     });
                     $("#loadingimg").hide();
+                    $("#trainingimg").hide();
                     var inps = document.querySelectorAll('input');
                     [].forEach.call(inps, function(inp) {
                         inp.onchange = function(e) {
@@ -327,6 +379,7 @@
                         get_cisgo_items(filterbytext)
                         get_plot_items(filterbytext)
                         get_grade_items(filterbytext)
+                        get_report_items(filterbytext)
                     }, false);
 
                     $(document).on('click', "input.reprocess-item", function () {
@@ -335,6 +388,7 @@
                             get_cisgo_items(filterbytext)
                             get_plot_items(filterbytext)
                             get_grade_items(filterbytext)
+                            get_report_items(filterbytext)
                         });
                     });
 
@@ -377,6 +431,25 @@
                         success: function (data) {
                             alert(data)
                             $("#loadingimg").hide();
+                        },
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                   
+                });
+
+                $("form#trainingform").submit(function(e) {
+                    e.preventDefault();    
+                    $("#trainingimg").show();
+                    var formData = new FormData(this);
+                    $.ajax({
+                        url: "/api/runningtraining",
+                        type: 'POST',
+                        data: formData,
+                        success: function (data) {
+                            alert(data)
+                            $("#trainingimg").hide();
                         },
                         cache: false,
                         contentType: false,
