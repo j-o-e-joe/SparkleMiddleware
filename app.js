@@ -7,6 +7,8 @@ const fs = require('fs');
 const router_ipad = require('./router_ipad');
 const router_webui = require('./router_webui');
 const config = require('./config');
+// const swaggerUi = require('swagger-ui-express');
+// const swaggerDocument = require('./swagger.json');
 const WebAppStrategy = require('ibmcloud-appid').WebAppStrategy;
 const APIStrategy = require("ibmcloud-appid").APIStrategy;
 
@@ -34,8 +36,11 @@ passport.use(new APIStrategy({
 "oAuthServerUrl": appid.oauthServerUrl   
 }));
 
+ 
 app.use('/', router_webui);
 app.use('/', router_ipad);
+//app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
 app.use(passport.authenticate(WebAppStrategy.STRATEGY_NAME));
 app.use(express.static(path.join(__dirname, 'public')));
 

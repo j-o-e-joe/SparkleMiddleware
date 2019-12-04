@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en"><head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
+    
+        <title>Cisgo File Storage</title>
+    
+        <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/jumbotron/">
+    
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        </head>
+        <body>
+        <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+            <a class="navbar-brand" href="#">Cisgo File Upload</a>
+            <div class="collapse navbar-collapse flex-row-reverse" id="navbarSupportedContent">
+            <form class="form-inline my-2 my-lg-0" id="logoutform">
+                <span class="navbar-brand" id="user"></span>
+                <button class="btn btn-outline-success my-2 my-sm-0" id="login" type="submit">Logout</button>
+            </form>
+            </div>
+        </nav>
+        <main role="main">
+            <div class="jumbotron">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h3 class="display-4">Training Upload</h3>
+                            <form action="/api/runningtraining" id="trainingform" enctype="multipart/form-data" method="POST">
+                                <table class="table">
+                                    <tbody>
+                                    <tr>
+                                        <td colspan="6">
+                                            Select training and test lists to start a new clarity grade training session.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="1"><p class="font-weight-bold">Training</p></td><td colspan="3">
+                                            <input type="file" id="training" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
+                                        </td>
+                                        <td colSpan="1"><p class="font-weight-bold">Test</p></td><td colspan="3">
+                                            <input type="file" id="test" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
+                                        </td>
+
+                                    </tr>
+                                    <tr><td><img id="trainingimg" width="26" height="26" src="loading.gif" alt="loading..." /></td><td colSpan="4"><input id="submit-all" ref="btn" type="submit" value="Submit"/></td></tr>
+                                    </tbody>
+                                </table>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="jumbotron">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <h3 class="display-4">Clarity Grade Training Uploads</h3>
+                                <table class='table' id="traininguploads"></table>
+                            </div>
+                        </div> 
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="jumbotron">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <h3 class="display-4">Clarity Grade Training Results</h3>
+                                <table class='table' id="trainingresults"></table>
+                            </div>
+                        </div> 
+                        
+                    </div>
+                </div>
+            </div>
+        </main>
+    
+        <footer class="container">
+        </footer>
+    
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+            <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+            <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script>
+                
+
+                function get_training_uploads() {
+                  $("#traininguploads").empty();
+                  $.get("/api/gettraininguploads", function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th>Training Number</th><th>Training Input</th><th>Test Input</th><th>Completed</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object.value.trainingtimestamp 
+                                                    + "</td><td>" + object.value.trainingfile 
+                                                    + "</td><td>" + object.value.testfile 
+                                                    + "</td><td>" + object.value.completed 
+                                                    + "</td></tr>");
+                        });
+                        $("#traininguploads").append(rows.join(""));
+                    });
+                }
+
+                function get_training_results() {
+                  $("#trainingresults").empty();
+                  $.get("/api/gettrainingresults", function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th>Training Number</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object.value.trainingtimestamp 
+                                                    + "</td><td>" + object.value.trainingfile 
+                                                    + "</td><td>" + object.value.testfile 
+                                                    + "</td><td>" + object.value.confusionmatrix 
+                                                    + "</td><td>" + object.value.ensembletable 
+                                                    + "</td><td>" + object.value.testsplitimages
+								                    + "</td></tr>");
+                        });
+                        $("#trainingresults").append(rows.join(""));
+                    });
+                }
+
+
+                $().ready(()=>{
+                    $.get("/api/user")
+                    .then((resp) => {
+                        $("#user").text(resp.user.name);
+                    });
+                    $("#trainingimg").hide();
+                    get_training_uploads()
+                    get_training_results()
+                });
+
+            </script>
+            <script>
+                $("form#logoutform").submit(function(e) {
+                    $.get("/api/logout")
+                        .then((resp) => {
+                    });
+                });
+
+                $("form#trainingform").submit(function(e) {
+                    e.preventDefault();    
+                    $("#trainingimg").show();
+
+                    let formData = new FormData()
+                    formData.append('files', document.getElementById('training').files[0], 'training.xlsx')
+                    formData.append('files', document.getElementById('test').files[0], 'test.xlsx')
+
+                    $.ajax({
+                        url: "/api/runningtraining",
+                        type: 'POST',
+                        data: formData,
+                        success: function (data) {
+                            alert(data)
+                            $("#trainingimg").hide();
+                        },
+                        cache: false,
+                        contentType: false,
+                        processData: false
+                    });
+                   
+                });
+                
+            </script>
+    </body>
+    </html>

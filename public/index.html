@@ -83,28 +83,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="jumbotron">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-md-5">
-                            <h3 class="display-4">Training Upload (DO NOT USE!)</h3>
-                            <form action="/api/runningtraining" id="trainingform" enctype="multipart/form-data" method="POST">
-                                <table class="table">
-                                    <tbody>
-                                    <tr>
-                                        <td colSpan="1"><p class="font-weight-bold">Training/Test Data</p></td><td colspan="3">
-                                            <input type="file" id="image" name="files" multiple="multiple" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
-                                        </td>
-                                    </tr>
-                                    <tr><td><img id="trainingimg" width="26" height="26" src="loading.gif" alt="loading..." /></td><td colSpan="4"><input id="submit-all" ref="btn" type="submit" value="Submit"/></td></tr>
-                                    </tbody>
-                                </table>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
             
             <div class="jumbotron">
                     <div class="container">
@@ -415,7 +393,7 @@
             </script>
             <script>
                 $("form#logoutform").submit(function(e) {
-                    $.get("/appid/logout")
+                    $.get("/api/logout")
                         .then((resp) => {
                     });
                 });
@@ -431,25 +409,6 @@
                         success: function (data) {
                             alert(data)
                             $("#loadingimg").hide();
-                        },
-                        cache: false,
-                        contentType: false,
-                        processData: false
-                    });
-                   
-                });
-
-                $("form#trainingform").submit(function(e) {
-                    e.preventDefault();    
-                    $("#trainingimg").show();
-                    var formData = new FormData(this);
-                    $.ajax({
-                        url: "/api/runningtraining",
-                        type: 'POST',
-                        data: formData,
-                        success: function (data) {
-                            alert(data)
-                            $("#trainingimg").hide();
                         },
                         cache: false,
                         contentType: false,

@@ -52,6 +52,23 @@ module.exports = {
             });
         });
     }, 
+    getTrainingItems: function(db) {
+        return new Promise((resolve, reject)=>{
+            db.view('all', 'sparkletrainingitems', 
+            {'include_docs': true},
+            function (err, data) {
+                if (err) {
+                    reject(err)
+                } else {
+                    var rows = []
+                    for (var i = 0; i < data.rows.length; i++) {
+                        rows.push({value: data.rows[i].value});    
+                    }
+                    resolve(rows)
+                }
+            });  
+        });
+    },
     getCisgoCloudantItems: function(db, controlnumber) {
         return new Promise((resolve, reject)=>{
             db.search('all', 'cisgo_by_controlnumber', { 'include_docs': true, q: 'controlnumber:' + controlnumber + '*' }, function(err, result) {

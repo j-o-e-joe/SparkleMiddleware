@@ -184,12 +184,12 @@ router.get('/appid/callback', passport.authenticate(WebAppStrategy.STRATEGY_NAME
 router.get('/api/user', (req, res) => {
     res.json({
         user: {
-            name: req.user.name
+            name: 'Joe' //req.user.name
         }
     });
 });
 
-router.get('/appid/logout', function(req, res) {
+router.get('/api/logout', function(req, res) {
     WebAppStrategy.logout(req);
     res.redirect('https://us-south.appid.cloud.ibm.com/oauth/v4/153281e8-9e03-40ec-93a1-0e5b2be7ef68')
 });
@@ -239,13 +239,13 @@ router.post('/api/runningtraining',
                 trainingitem.trainingfile = trainingfile;
                 trainingitem.trainingtimestamp = trainingtimestamp;
                 cloudant_data.addItemToCloudantDB(db, trainingitem).then(()=>{
-                    //runsparkletraining(trainingtimestamp).then(()=>{
+                    runsparkletraining(trainingtimestamp).then(()=>{
                         res.write("Success");
                         res.end();
-                    // }).catch((e)=>{
-                    //     res.write(`ERROR: ${e.code} - ${e.message}\n`);
-                    //     res.end();
-                    // })
+                    }).catch((e)=>{
+                        res.write(`ERROR: ${e.code} - ${e.message}\n`);
+                        res.end();
+                    })
                 }).catch((e) => {
                     res.write(`ERROR: ${e.code} - ${e.message}\n`);
                     res.end();
@@ -387,6 +387,62 @@ router.get('/api/deletedbitem',
     }
 );
 
+router.get('/api/gettraininguploads', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        cloudant_data.getTrainingItems(db).then((rows) =>{
+            var trows = []
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
+                if (rows[i].value.confusionmatrix != undefined) {
+                    rows[i].value.completed = 'Yes'
+                } else {
+                    rows[i].value.completed = 'No'
+                }
+                trows.push(rows[i])
+            }
+            var item = new Object();
+            item.rows = trows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/gettrainingresults', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        cloudant_data.getTrainingItems(db).then((rows) =>{
+            var trows = []
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].value.confusionmatrix != undefined) {
+                    rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                    rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"
+                    rows[i].value.ensembletable = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.ensembletable + "'>" + rows[i].value.ensembletable + "</a>"
+                    rows[i].value.testsplitimages = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testsplitimages + "'>" + rows[i].value.testsplitimages + "</a>"
+                    rows[i].value.confusionmatrix = "<a href='/api/getobject?bucketname=sparkletraining&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.confusionmatrix + "'>" + rows[i].value.confusionmatrix + "</a>"
+                    trows.push(rows[i])
+                }
+            }
+            var item = new Object();
+            item.rows = trows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
 router.get('/api/getcisgoitems', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
@@ -496,23 +552,6 @@ router.get('/api/getreportitems',
     }
 );
 
-router.get('/api/getreportitems', 
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) {
-        var controlnumber = req.query.controlnumber;
-        cloudant_data.getReportCloudantItems(db, controlnumber).then((rows) =>{
-            var item = new Object();
-            item.rows = rows
-            res.json(item);
-            res.end();
-        }).catch((e)=>{
-            res.write('ERROR: ${e.code} - ${e.message}\n');
-            res.end();
-        })
-    }
-);
 
 router.get('/api/getobject',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
@@ -523,6 +562,26 @@ router.get('/api/getobject',
         var filepath = req.query.filepath;
         s3_data.getItemFromStorage(bucketname, filepath).then((data)=>{
             res.writeHead(200, {'Content-Type': 'image/jpeg'});
+            res.write(data.Body, 'binary');
+            res.end(null, 'binary');
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/gettrainingfile',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        var bucketname = req.query.bucketname
+        var filepath = req.query.filepath;
+        var contenttype = req.query.contenttype;
+        s3_data.getItemFromStorage(bucketname, filepath).then((data)=>{
+            res.setHeader('Content-disposition', 'attachment; filename=' + filepath);
+            res.writeHead(200, {'Content-Type': contenttype});
             res.write(data.Body, 'binary');
             res.end(null, 'binary');
         }).catch((e)=>{
