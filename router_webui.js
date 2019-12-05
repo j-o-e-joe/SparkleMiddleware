@@ -184,7 +184,7 @@ router.get('/appid/callback', passport.authenticate(WebAppStrategy.STRATEGY_NAME
 router.get('/api/user', (req, res) => {
     res.json({
         user: {
-            name: 'Joe' //req.user.name
+            name: req.user.name
         }
     });
 });

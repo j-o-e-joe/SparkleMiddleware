@@ -49,9 +49,8 @@
                                     <tr><td colspan="4"><p class="font-weight-bold"><span id="serverstatus" style="color:red">Transporter is not running</span></p></td></tr> 
                                     <tr><td colspan="3"><p class="font-weight-bold">Control Number</p></td>
                                         <td colspan="1"><input type="text" id="transporter_control" name="control" value=""/></td>
-                                        <td colspan="1"><input id="submit-all" ref="btn" type="submit" value="Submit" onclick="get_image_result(document.getElementById('transporter_control').value)"/></td>
+                                        <td colspan="1"><input id="submit-all" ref="btn" type="submit" value="Submit" onclick="get_zip_from_transporter(document.getElementById('transporter_control').value)"/></td>
                                     </tr>  
-                                    <tr><td colspan="4"><div id="imagescontainer"></div></td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -141,22 +140,8 @@
             <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
             <script>
-                function upload_transport_image(image, protocol, controlnumber) {
-                    var data = new FormData();
-                    data.append('file', image);
-                    
-                    $.ajax({
-                        url: "/api/setitemcontents",
-                        type: 'POST',
-                        data: formData,
-                        success: function (data) {
-                            alert(data)
-                        },
-                        cache: false,
-                        contentType: false,
-                        processData: false
-                    });
-                }
+                const transporterurl = "http://localhost:8080";
+                const cisgofilepath = "/getFileData?filewithPath=/Users/josephligman/Desktop/Cisgo/";
 
                 function get_cisgo_items(controlnumber) {
                   $("#cisgoitems").empty();
@@ -252,7 +237,7 @@
                 }
 
                 // Health check function for Transporter
-                function get_service_status() {
+                function get_transporter_status() {
                     var xhttp;
                     xhttp = new XMLHttpRequest();
                     xhttp.onreadystatechange = function() {
@@ -264,72 +249,45 @@
                             }
                         }
                     };
-                    xhttp.open("GET", "http://localhost:8080/getServiceStatus", true);
+                    xhttp.open("GET", transporterurl + "/getServiceStatus", true);
                     xhttp.send();
                 }
 
-                // Function to query image. This can be removed once code to upload files to IBM cloud is implemented
-                function image_load(url) {
-                    'use strict';
-                    // Create new promise with the Promise() constructor
-                    return new Promise(function (resolve, reject) {
-                        // Standard XHR to load an image
-                        var request = new XMLHttpRequest();
-                        request.open('GET', url);
-                        request.responseType = 'blob';
-                        
-                        // When the request loads, check whether it was successful
-                        request.onload = function () {
-                            if (request.status === 200) {
-                                // If successful, resolve the promise by passing back the request response
-                                resolve(request.response);
-                            } else {
-                                // If it fails, reject the promise with a error message
-                                reject(new Error('Image did not load successfully. Error:' + request.statusText));
-                            }
-                        };
-                    
-                        request.onerror = function () {
-                            // Error handling
-                            reject(new Error('Error retrieving image.'));
-                        };
-                    
-                        // Send the request
-                        request.send();
-                    });
-                }
-                // Function to query 4 images one by one
-                function get_image_result(controlno) {
-                    var div = document.getElementById('imagescontainer');
-                    // Clear the image contenter div to load new images
-                    div.innerHTML='';
-                    load_image('http://localhost:8080/getFileData?filewithPath=/Users/josephligman/Desktop/Cisgo/' + controlno + '_A_0000.jpg');
-                    load_image('http://localhost:8080/getFileData?filewithPath=/Users/josephligman/Desktop/Cisgo/' + controlno + '_B_0000_High.jpg');
-                    load_image('http://localhost:8080/getFileData?filewithPath=/Users/josephligman/Desktop/Cisgo/' + controlno + '_B_0000_Low.jpg');
-                }
+                // Function to get the zip file from the transporter
+                function get_zip_from_transporter(controlno) {
+        
+                    var url = transporterurl + cisgofilepath + controlno + '.zip'
+                    var request = new XMLHttpRequest();
+                    request.responseType = 'blob';
+    
+                    request.onreadystatechange = function() {
+                        if (request.readyState === 4) {
+                            var formData = new FormData();
+                            formData.append("control", controlno);
+                            formData.append("cisgouser", "transporteruser");
+                            formData.append("cisgodevice", "transporter");
+                            formData.append("file", request.response);
 
-                // Function to load image on browser. This can be removed once code to upload files to IBM cloud is implemented
-                function load_image(imgurl) {
-                    'use strict';
-                    // Get a reference to the body element, and create a new image object
-                    var div = document.getElementById('imagescontainer'),
-                    myImage = new Image();
+                            $.ajax({
+                                url: "/api/setitemcontents",
+                                type: 'POST',
+                                data: formData,
+                                success: function (data) {
+                                    alert(data)
+                                },
+                                cache: false,
+                                contentType: false,
+                                processData: false
+                            });
+                        }
+                    }
                 
-                    
-                    // Call the function with the URL we want to load, but then chain the
-                    // promise then() method on to the end of it. This contains two callbacks
-                    image_load(imgurl).then(function (response) {
-                        // The first runs when the promise resolves, with the request.reponse specified within the resolve() method.
-                        var imageURL = window.URL.createObjectURL(response);
-                        myImage.src = imageURL;
-                        myImage.width = 160;
-                        myImage.height = 120;
-                        div.appendChild(myImage);
-                        
-                        // The second runs when the promise is rejected, and logs the Error specified with the reject() method.
-                    }, function (Error) {
-                        console.log(Error);
-                    });
+                    request.onerror = function () {
+                        alert(new Error('Error retrieving image.'));
+                    };
+
+                    request.open('GET', url);
+                    request.send();
                 }
 
                 $().ready(()=>{
@@ -339,17 +297,6 @@
                     });
                     $("#loadingimg").hide();
                     $("#trainingimg").hide();
-                    var inps = document.querySelectorAll('input');
-                    [].forEach.call(inps, function(inp) {
-                        inp.onchange = function(e) {
-                            var filelist = "<ul id=\"folderitems\">";
-                            for (let i = 0; i < this.files.length; i++) {
-                                filelist += "<li>" + this.files[i].webkitRelativePath + "</li>"
-                            }
-                            filelist += "</ul>";
-                            $("#folder_list").html(filelist);
-                        };
-                    });
 
                     var cisgofilterbutton = document.getElementById("filter-cisgo");
                     cisgofilterbutton.addEventListener('click', function() {
@@ -359,16 +306,6 @@
                         get_grade_items(filterbytext)
                         get_report_items(filterbytext)
                     }, false);
-
-                    $(document).on('click', "input.reprocess-item", function () {
-                        $.get("/api/reprocesscisgoitem?controlnumber="+this.id, function(data, status) {
-                            var filterbytext = $('#filter-cisgo-control').val();
-                            get_cisgo_items(filterbytext)
-                            get_plot_items(filterbytext)
-                            get_grade_items(filterbytext)
-                            get_report_items(filterbytext)
-                        });
-                    });
 
                     $(document).on('click', "input.delete-plot-item", function () {
                         $.get("/api/deleteitem?id="+this.id, function(data, status) {
@@ -384,10 +321,7 @@
                         });
                     });
                     
-                    // $(document).on('click', "input.download-item", function () {
-                    //     $.get("/api/downloaditem?id="+this.id, function(data, status) {
-                    //     });
-                    // });
+                    get_transporter_status();
                 });
 
             </script>
