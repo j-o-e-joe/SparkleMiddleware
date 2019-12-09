@@ -10,6 +10,9 @@
     
         <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/jumbotron/">
     
+        <!-- JQuery ui CSS -->
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+ 
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         </head>
@@ -24,6 +27,37 @@
             </div>
         </nav>
         <main role="main">
+            <div class="jumbotron">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h3 class="display-4">Training List</h3>
+                            <form action="/api/gettrainingbaselist" id="trainglistform" >
+                                <table class="table">
+                                    <tbody>
+                                    <tr>
+                                        <td colspan="2">
+                                            Get a starter training list from a date range.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="1"><p class="font-weight-bold">Start Date</p></td><td colspan="3">
+                                            <input type="text" id="startdate" name="startdate"> 
+                                        </td>
+                                        <td colSpan="1"><p class="font-weight-bold">End Date</p></td><td colspan="3">
+                                            <input type="text" id="enddate" name="enddate"> 
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><input type="submit" id="base-training-set" value="Submit"/></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="jumbotron">
                 <div class="container">
                     <div class="row">
@@ -91,6 +125,7 @@
             <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
             <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
             <script>
                 
 
@@ -116,14 +151,16 @@
                   $.get("/api/gettrainingresults", function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Training Number</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th>" );  
+                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th><th>Model Active</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td>" + object.value.trainingtimestamp 
+                            rows.push( "<tr><td><input type=\"button\" class=\"clarity-grade-model-item\" id=\"" + object.value.trainingtimestamp + "\" value=\"Activate\">"
+                                                    + "</td><td>" + object.value.trainingtimestamp 
                                                     + "</td><td>" + object.value.trainingfile 
                                                     + "</td><td>" + object.value.testfile 
                                                     + "</td><td>" + object.value.confusionmatrix 
                                                     + "</td><td>" + object.value.ensembletable 
                                                     + "</td><td>" + object.value.testsplitimages
+                                                    + "</td><td>" + object.value.active 
 								                    + "</td></tr>");
                         });
                         $("#trainingresults").append(rows.join(""));
@@ -137,6 +174,15 @@
                         $("#user").text(resp.user.name);
                     });
                     $("#trainingimg").hide();
+                    $("#startdate").datepicker();
+                    $("#enddate").datepicker();
+                    $(document).on('click', "input.clarity-grade-model-item", function () {
+                        $.get("/api/activateclaritygrademodel?trainingtimestamp="+this.id, function(data, status) {
+                           alert(data)
+                           get_training_results()
+                        });
+                    });
+
                     get_training_uploads()
                     get_training_results()
                 });
@@ -147,6 +193,26 @@
                     $.get("/api/logout")
                         .then((resp) => {
                     });
+                });
+
+                $("form#trainglistform").submit(function(e) {
+                    e.preventDefault();    
+                    var startdate = new Date($('#startdate').val()).toISOString();
+                    var enddate = new Date($('#enddate').val()).toISOString();
+                    fetch("/api/gettrainingbaselist?startdate=" + startdate + "&enddate=" + enddate)
+                    .then(resp => resp.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        // the filename you want
+                        a.download = 'training_base_list.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(() => alert('oh no!'));
                 });
 
                 $("form#trainingform").submit(function(e) {

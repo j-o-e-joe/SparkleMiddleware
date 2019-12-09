@@ -154,6 +154,39 @@ module.exports = {
             });
         });
     },
+    getTrainingCloudantItems: function(db, startdate, enddate) {
+        return new Promise((resolve, reject)=>{
+ 
+            var sdate = new Date(startdate);
+            var edate = new Date(enddate);
+            db.view('all', 'plot_timestamp_items', {include_docs: false},
+            function (err, result) {
+                if (err) {
+                    console.log(err);
+                    reject(err)
+                } else {
+                    var map = new Map()
+                    for (var i = 0; i < result.rows.length; i++) {
+                        var plotdate = result.rows[i].key
+                        var ctrlnumber = result.rows[i].value
+                        if (map.has(ctrlnumber)) {
+                            var dnew = new Date(plotdate)
+                            var dexisting = new Date(map.get(ctrlnumber))
+                             if (dnew > dexisting) {
+                                map.set(ctrlnumber, plotdate)
+                            }
+                        } else {
+                            var cdate = new Date(plotdate)
+                            if (cdate >= sdate && cdate <= edate) {
+                                map.set(ctrlnumber, plotdate)
+                            }
+                        }
+                    }
+                    resolve(map);
+                }
+            });  
+        });
+    },
     getGradeViewItems: function(db, controlnumber) {
         return new Promise((resolve, reject)=>{
             db.view('all', 'gradeitems', 

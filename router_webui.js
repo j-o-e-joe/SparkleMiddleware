@@ -3,6 +3,7 @@ const passport = require('passport');
 const multer  = require('multer');
 const AdmZip = require('adm-zip');
 const request = require('request')
+const xlsx = require('xlsx');
 const s3_data = require('./s3_data');
 const cloudant_data = require('./cloudant_data');
 const config = require('./config');
@@ -67,6 +68,62 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
         request(options, callback)
     });
 }
+
+function updateclaritygradingmodel(trainingtimestamp) {
+    return new Promise((resolve, reject)=>{
+        var auth = "Basic " + new Buffer.from(serverauth.user + ":" + serverauth.password).toString("base64");
+        const options = {
+            url: serverauth.url + 'updateclaritygradingmodel?trainingtimestamp='+ trainingtimestamp,
+            headers: {
+            'Authorization' : auth
+            },
+            agentOptions: {
+                ca: fs.readFileSync('nginx-selfsigned-2.crt', {encoding: 'utf-8'}),
+                checkServerIdentity: function (host, cert) {
+                    return undefined;
+                }
+            }
+        };
+        
+        function callback(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                resolve(body);
+            } else { 
+                reject(error);
+            }
+        }
+        request(options, callback)
+    });
+}
+
+var serverauth2 = config.getServerAuth2(fs.readFileSync("vcap-local.json", "utf-8"))
+function updateclaritygradingmodel2(trainingtimestamp) {
+    return new Promise((resolve, reject)=>{
+        var auth = "Basic " + new Buffer.from(serverauth2.user + ":" + serverauth2.password).toString("base64");
+        const options = {
+            url: serverauth2.url + 'updateclaritygradingmodel?trainingtimestamp='+ trainingtimestamp,
+            headers: {
+                'Authorization' : auth
+            },
+            agentOptions: {
+                ca: fs.readFileSync('nginx-selfsigned.crt', {encoding: 'utf-8'}),
+                checkServerIdentity: function (host, cert) {
+                    return undefined;
+                }
+            }
+        };
+        
+        function callback(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                resolve(body);
+            } else { 
+                reject(error);
+            }
+        }
+        request(options, callback)
+    });
+}
+
 var serverauth3 = config.getServerAuth3(fs.readFileSync("vcap-local.json", "utf-8"))
 function runsparkletraining(trainingtimestamp) {
     return new Promise((resolve, reject)=>{
@@ -443,6 +500,26 @@ router.get('/api/gettrainingresults',
     }
 );
 
+router.get('/api/activateclaritygrademodel', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        // var trainingtimestamp = req.query.trainingtimestamp;  
+        // var promises = []
+        // promises.push(updateclaritygradingmodel(trainingtimestamp))
+        // promises.push(updateclaritygradingmodel2(trainingtimestamp))
+        // Promise.all(promises).then(()=>{
+        //     res.write('Model ' + trainingtimestamp + ' has been activated.');
+            res.write("Not yet implemented")
+            res.end();
+        // }).catch((e)=>{
+        //     res.write(`ERROR: ${e.code} - ${e.message}\n`);
+        //     res.end();
+        // })
+    }
+);
+
 router.get('/api/getcisgoitems', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
@@ -584,6 +661,40 @@ router.get('/api/gettrainingfile',
             res.writeHead(200, {'Content-Type': contenttype});
             res.write(data.Body, 'binary');
             res.end(null, 'binary');
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/gettrainingbaselist',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        var startdate = req.query.startdate
+        var enddate = req.query.enddate;
+        cloudant_data.getTrainingCloudantItems(db, startdate, enddate).then((map) => {
+
+            var crows = []
+            for (var [key, value] of map) {
+                var plotitem = []
+                plotitem.push(key);
+                plotitem.push(value);
+                crows.push(plotitem);    
+            }
+
+            var ws_name = "Sheet1";
+            var ws = xlsx.utils.aoa_to_sheet(crows);
+            var wb = xlsx.utils.book_new();
+            xlsx.utils.book_append_sheet(wb, ws, ws_name);
+            var wbout = xlsx.write(wb, {bookType:'xlsx', bookSST:false, type:'array' });
+            res.setHeader('Content-disposition', 'attachment; filename=test.xlsx');
+            res.writeHead(200, {'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            res.write(new Buffer.from(wbout), 'binary');
+            res.end();
+           
         }).catch((e)=>{
             res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
