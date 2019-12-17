@@ -154,6 +154,23 @@ module.exports = {
             });
         });
     },
+    getTrainingSessions: function(db) {
+        return new Promise((resolve, reject)=>{
+ 
+            db.view('all', 'sparkletrainingjobs', {include_docs: true},
+            function (err, data) {
+                if (err) {
+                    reject(err)
+                } else {
+                    var rows = []
+                    for (var i = 0; i < data.rows.length; i++) {
+                        rows.push({value: data.rows[i].value});    
+                    }
+                    resolve(rows)
+                }
+            });  
+        });
+    },
     getTrainingCloudantItems: function(db, startdate, enddate) {
         return new Promise((resolve, reject)=>{
  

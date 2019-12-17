@@ -62,7 +62,7 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-md-5">
-                            <h3 class="display-4">Training Upload</h3>
+                            <h3 class="display-4">Clarity Training Upload</h3>
                             <form action="/api/runningtraining" id="trainingform" enctype="multipart/form-data" method="POST">
                                 <table class="table">
                                     <tbody>
@@ -89,6 +89,17 @@
                 </div>
             </div>
             <div class="jumbotron">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h3 class="display-4">Clarity Grade Training Sessions</h3>
+                            <table class='table' id="trainingsessions"></table>
+                        </div>
+                    </div> 
+                    
+                </div>
+            </div>
+            <div class="jumbotron">
                     <div class="container">
                         <div class="row">
                             <div class="col-md-5">
@@ -112,6 +123,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </main>
     
         <footer class="container">
@@ -167,6 +179,25 @@
                     });
                 }
 
+                function get_training_jobs() {
+                  $("#trainingsessions").empty();
+                  $.get("/api/gettrainingsessions", function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th>Training Number</th><th>Job Number</th><th>Enqueued</th><th>Started</th><th>Ended</th><th>Status</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object.value.trainingid 
+                                                    + "</td><td>" + object.value._id 
+                                                    + "</td><td>" + object.value.enqueued_at 
+                                                    + "</td><td>" + object.value.started_at 
+                                                    + "</td><td>" + object.value.ended_at 
+                                                    + "</td><td>" + object.value.status 
+                                                    + "</td></tr>");
+                        });
+                        $("#trainingsessions").append(rows.join(""));
+                    });
+                }
+
 
                 $().ready(()=>{
                     $.get("/api/user")
@@ -182,7 +213,7 @@
                            get_training_results()
                         });
                     });
-
+                    get_training_jobs()
                     get_training_uploads()
                     get_training_results()
                 });

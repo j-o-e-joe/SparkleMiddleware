@@ -246,6 +246,9 @@
                             if (this.responseText=='1.0'){
                                 document.getElementById("serverstatus").innerHTML="Transporter is connected";
                                 document.getElementById("serverstatus").style.color="#008800";
+                            } else {
+                                document.getElementById("serverstatus").innerHTML="Transporter reponse: " + this.responseText;
+                                document.getElementById("serverstatus").style.color="#FF0000";
                             }
                         }
                     };

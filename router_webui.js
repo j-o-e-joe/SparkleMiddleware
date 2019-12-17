@@ -153,6 +153,34 @@ function runsparkletraining(trainingtimestamp) {
     });
 }
 
+function getsparkletrainingsessions() {
+    return new Promise((resolve, reject)=>{
+        var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
+        const options = {
+            url: serverauth3.url + 'gettrainingsessions',
+            headers: {
+            'Authorization' : auth
+            },
+            agentOptions: {
+                ca: fs.readFileSync('nginx-selfsigned-3.crt', {encoding: 'utf-8'}),
+                checkServerIdentity: function (host, cert) {
+                    return undefined;
+                }
+            }
+        };
+
+        function callback(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                resolve(body);
+            } else { 
+                reject(error);
+            }
+        }
+        request(options, callback)
+        
+    });
+}
+
 async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser, cisgodevice) {
     return new Promise(async (resolve, reject)=>{
         
@@ -695,6 +723,29 @@ router.get('/api/gettrainingbaselist',
             res.write(new Buffer.from(wbout), 'binary');
             res.end();
            
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/gettrainingsessions',
+    // passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+    //     session: false
+    // }),
+    function(req, res) {
+        getsparkletrainingsessions().then((data)=>{
+            cloudant_data.getTrainingSessions(db).then((rows) =>{
+                console.log(rows)
+                var item = new Object();
+                item.rows = rows
+                res.json(item);
+                res.end();
+            }).catch((e)=>{
+                res.write(`ERROR: ${e.code} - ${e.message}\n`);
+                res.end();
+            })
         }).catch((e)=>{
             res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();
