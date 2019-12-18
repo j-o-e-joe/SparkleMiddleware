@@ -125,11 +125,39 @@ function updateclaritygradingmodel2(trainingtimestamp) {
 }
 
 var serverauth3 = config.getServerAuth3(fs.readFileSync("vcap-local.json", "utf-8"))
-function runsparkletraining(trainingtimestamp) {
+function runclaritytraining(trainingtimestamp) {
     return new Promise((resolve, reject)=>{
         var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
         const options = {
-            url: serverauth3.url + 'starttrainingsession?trainingtimestamp='+ trainingtimestamp,
+            url: serverauth3.url + 'starttrainingclarity?trainingtimestamp='+ trainingtimestamp,
+            headers: {
+            'Authorization' : auth
+            },
+            agentOptions: {
+                ca: fs.readFileSync('nginx-selfsigned-3.crt', {encoding: 'utf-8'}),
+                checkServerIdentity: function (host, cert) {
+                    return undefined;
+                }
+            }
+        };
+
+        function callback(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                resolve(body);
+            } else { 
+                reject(error);
+            }
+        }
+        request(options, callback)
+        
+    });
+}
+
+function runinclusiontraining(trainingtimestamp) {
+    return new Promise((resolve, reject)=>{
+        var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
+        const options = {
+            url: serverauth3.url + 'starttraininginclusions?trainingtimestamp='+ trainingtimestamp,
             headers: {
             'Authorization' : auth
             },
@@ -324,7 +352,72 @@ router.post('/api/runningtraining',
                 trainingitem.trainingfile = trainingfile;
                 trainingitem.trainingtimestamp = trainingtimestamp;
                 cloudant_data.addItemToCloudantDB(db, trainingitem).then(()=>{
-                    runsparkletraining(trainingtimestamp).then(()=>{
+                    runclaritytraining(trainingtimestamp).then(()=>{
+                        res.write("Success");
+                        res.end();
+                    }).catch((e)=>{
+                        res.write(`ERROR: ${e.code} - ${e.message}\n`);
+                        res.end();
+                    })
+                }).catch((e) => {
+                    res.write(`ERROR: ${e.code} - ${e.message}\n`);
+                    res.end();
+                })
+        })
+        .catch((e) => { 
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        });   
+    }
+   
+);
+
+router.post('/api/runinclusiontraining', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    upload.array('files'), (req, res) => {
+    
+        if (req.files == undefined) {
+            res.write("Invalid Input!")
+            res.end()
+            return
+        }
+
+        var bucketname = "sparkleinclusiontraining"
+        var testfile = undefined
+        var trainingfile = undefined
+        var trainingtimestamp = new Date(new Date().toUTCString()).toISOString();
+        var promises = [];
+
+        for (var i = 0; i < req.files.length; i++) {
+            var filename = req.files[i].originalname;
+            var filebody = req.files[i].buffer;
+            if (filename.toLowerCase().includes('test')) {
+                testfile = filename
+                promises.push(s3_data.addTrainingToStorage(bucketname, trainingtimestamp, testfile, filebody))
+            } 
+            if (filename.toLowerCase().includes('training')) {
+                trainingfile = filename
+                promises.push(s3_data.addTrainingToStorage(bucketname, trainingtimestamp, trainingfile, filebody))
+            }
+        }
+
+        if (testfile == undefined || trainingfile == undefined) {
+            res.write("Invalid Input!")
+            res.end()
+            return
+        }
+
+        Promise.all(promises)    
+        .then(() => { 
+                var trainingitem = new Object();
+                trainingitem.bucketname = bucketname;
+                trainingitem.testfile = testfile;
+                trainingitem.trainingfile = trainingfile;
+                trainingitem.trainingtimestamp = trainingtimestamp;
+                cloudant_data.addItemToCloudantDB(db, trainingitem).then(()=>{
+                    runinclusiontraining(trainingtimestamp).then(()=>{
                         res.write("Success");
                         res.end();
                     }).catch((e)=>{
@@ -472,7 +565,7 @@ router.get('/api/deletedbitem',
     }
 );
 
-router.get('/api/gettraininguploads', 
+router.get('/api/getclaritytraininguploads', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
     }),
@@ -500,7 +593,7 @@ router.get('/api/gettraininguploads',
     }
 );
 
-router.get('/api/gettrainingresults', 
+router.get('/api/getclaritytrainingresults', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
     }),
@@ -514,6 +607,63 @@ router.get('/api/gettrainingresults',
                     rows[i].value.ensembletable = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.ensembletable + "'>" + rows[i].value.ensembletable + "</a>"
                     rows[i].value.testsplitimages = "<a href='/api/gettrainingfile?bucketname=sparkletraining&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testsplitimages + "'>" + rows[i].value.testsplitimages + "</a>"
                     rows[i].value.confusionmatrix = "<a href='/api/getobject?bucketname=sparkletraining&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.confusionmatrix + "'>" + rows[i].value.confusionmatrix + "</a>"
+                    trows.push(rows[i])
+                }
+            }
+            var item = new Object();
+            item.rows = trows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/getinclusiontraininguploads', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        cloudant_data.getInclusionTrainingItems(db).then((rows) =>{
+            var trows = []
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
+                if (rows[i].value.confusionmatrix != undefined) {
+                    rows[i].value.completed = 'Yes'
+                } else {
+                    rows[i].value.completed = 'No'
+                }
+                trows.push(rows[i])
+            }
+            var item = new Object();
+            item.rows = trows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/getinclusiontrainingresults', 
+    // passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+    //     session: false
+    // }),
+    function(req, res) {  
+        cloudant_data.getInclusionTrainingItems(db).then((rows) =>{
+            var trows = []
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].value.roc_ar != undefined) {
+                    rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                    rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"
+                    rows[i].value.roc_ar = "<a href='/api/getobject?bucketname=sparkleinclusiontraining&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_ar) + "'>" + rows[i].value.roc_ar + "</a>"
+                    rows[i].value.roc_a = "<a href='/api/getobject?bucketname=sparkleinclusiontraining&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_a) + "'>" + rows[i].value.roc_a + "</a>"
+                    rows[i].value.roc_r = "<a href='/api/getobject?bucketname=sparkleinclusiontraining&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_r) + "'>" + rows[i].value.roc_r + "</a>"
+                    rows[i].value.test_images_zip = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.test_images_zip + "'>" + rows[i].value.test_images_zip + "</a>"
                     trows.push(rows[i])
                 }
             }
@@ -731,13 +881,12 @@ router.get('/api/gettrainingbaselist',
 );
 
 router.get('/api/gettrainingsessions',
-    // passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-    //     session: false
-    // }),
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
     function(req, res) {
         getsparkletrainingsessions().then((data)=>{
             cloudant_data.getTrainingSessions(db).then((rows) =>{
-                console.log(rows)
                 var item = new Object();
                 item.rows = rows
                 res.json(item);

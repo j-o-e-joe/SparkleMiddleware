@@ -6,7 +6,7 @@
         <meta name="author" content="">
         <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
     
-        <title>Cisgo File Storage</title>
+        <title>Inclusion Training</title>
     
         <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/jumbotron/">
     
@@ -18,7 +18,7 @@
         </head>
         <body>
         <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-            <a class="navbar-brand" href="#">Cisgo File Upload</a>
+            <a class="navbar-brand" href="#">Inclusion Training</a>
             <div class="collapse navbar-collapse flex-row-reverse" id="navbarSupportedContent">
             <form class="form-inline my-2 my-lg-0" id="logoutform">
                 <span class="navbar-brand" id="user"></span>
@@ -58,25 +58,26 @@
                     </div>
                 </div>
             </div>
+            
             <div class="jumbotron">
                 <div class="container">
                     <div class="row">
                         <div class="col-md-5">
-                            <h3 class="display-4">Clarity Training Upload</h3>
-                            <form action="/api/runningtraining" id="trainingform" enctype="multipart/form-data" method="POST">
+                            <h3 class="display-4">Inclusion Training</h3>
+                            <form action="/api/runinclusiontraining" id="inclusiontrainingform" enctype="multipart/form-data" method="POST">
                                 <table class="table">
                                     <tbody>
                                     <tr>
                                         <td colspan="6">
-                                            Select training and test lists to start a new clarity grade training session.
+                                            Select training and test lists to start a new inclusion grade training session.
                                         </td>
                                     </tr>
                                     <tr>
                                         <td colSpan="1"><p class="font-weight-bold">Training</p></td><td colspan="3">
-                                            <input type="file" id="training" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
+                                            <input type="file" id="inclusiontraining" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
                                         </td>
                                         <td colSpan="1"><p class="font-weight-bold">Test</p></td><td colspan="3">
-                                            <input type="file" id="test" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
+                                            <input type="file" id="inclusiontest" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"> 
                                         </td>
 
                                     </tr>
@@ -89,22 +90,11 @@
                 </div>
             </div>
             <div class="jumbotron">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-md-5">
-                            <h3 class="display-4">Clarity Grade Training Sessions</h3>
-                            <table class='table' id="trainingsessions"></table>
-                        </div>
-                    </div> 
-                    
-                </div>
-            </div>
-            <div class="jumbotron">
                     <div class="container">
                         <div class="row">
                             <div class="col-md-5">
-                                <h3 class="display-4">Clarity Grade Training Uploads</h3>
-                                <table class='table' id="traininguploads"></table>
+                                <h3 class="display-4">Inclusion Training Uploads</h3>
+                                <table class='table' id="inclusiontraininguploads"></table>
                             </div>
                         </div> 
                         
@@ -115,8 +105,8 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-md-5">
-                                <h3 class="display-4">Clarity Grade Training Results</h3>
-                                <table class='table' id="trainingresults"></table>
+                                <h3 class="display-4">Inclusion Training Results</h3>
+                                <table class='table' id="inclusiontrainingresults"></table>
                             </div>
                         </div> 
                         
@@ -139,11 +129,10 @@
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
             <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
             <script>
-                
 
-                function get_training_uploads() {
-                  $("#traininguploads").empty();
-                  $.get("/api/gettraininguploads", function(data, status) {
+                function get_inclusion_training_uploads() {
+                  $("#inclusiontraininguploads").empty();
+                  $.get("/api/getinclusiontraininguploads", function(data, status) {
                         var obj = data;
                         var rows = [];
                         rows.push("<tr><th>Training Number</th><th>Training Input</th><th>Test Input</th><th>Completed</th>" );  
@@ -154,47 +143,29 @@
                                                     + "</td><td>" + object.value.completed 
                                                     + "</td></tr>");
                         });
-                        $("#traininguploads").append(rows.join(""));
+                        $("#inclusiontraininguploads").append(rows.join(""));
                     });
                 }
 
-                function get_training_results() {
-                  $("#trainingresults").empty();
-                  $.get("/api/gettrainingresults", function(data, status) {
+                function get_inclusion_training_results() {
+                  $("#inclusiontrainingresults").empty();
+                  $.get("/api/getinclusiontrainingresults", function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th><th>Model Active</th>" );  
+                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Training Input</th><th>Test Input</th><th>ROC Curve Actuals/Reflections</th><th>ROC Curve Actuals</th><th>ROC Curve Reflections</th><th>Results ZIP</th><th>Model Active</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"clarity-grade-model-item\" id=\"" + object.value.trainingtimestamp + "\" value=\"Activate\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"inclusion-grade-model-item\" id=\"" + object.value.trainingtimestamp + "\" value=\"Activate\">"
                                                     + "</td><td>" + object.value.trainingtimestamp 
                                                     + "</td><td>" + object.value.trainingfile 
-                                                    + "</td><td>" + object.value.testfile 
-                                                    + "</td><td>" + object.value.confusionmatrix 
-                                                    + "</td><td>" + object.value.ensembletable 
-                                                    + "</td><td>" + object.value.testsplitimages
+                                                    + "</td><td>" + object.value.testfile
+                                                    + "</td><td>" + object.value.roc_ar 
+                                                    + "</td><td>" + object.value.roc_a 
+                                                    + "</td><td>" + object.value.roc_r
+                                                    + "</td><td>" + object.value.test_images_zip
                                                     + "</td><td>" + object.value.active 
 								                    + "</td></tr>");
                         });
-                        $("#trainingresults").append(rows.join(""));
-                    });
-                }
-
-                function get_training_jobs() {
-                  $("#trainingsessions").empty();
-                  $.get("/api/gettrainingsessions", function(data, status) {
-                        var obj = data;
-                        var rows = [];
-                        rows.push("<tr><th>Training Number</th><th>Job Number</th><th>Enqueued</th><th>Started</th><th>Ended</th><th>Status</th>" );  
-                        $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td>" + object.value.trainingid 
-                                                    + "</td><td>" + object.value._id 
-                                                    + "</td><td>" + object.value.enqueued_at 
-                                                    + "</td><td>" + object.value.started_at 
-                                                    + "</td><td>" + object.value.ended_at 
-                                                    + "</td><td>" + object.value.status 
-                                                    + "</td></tr>");
-                        });
-                        $("#trainingsessions").append(rows.join(""));
+                        $("#inclusiontrainingresults").append(rows.join(""));
                     });
                 }
 
@@ -207,15 +178,8 @@
                     $("#trainingimg").hide();
                     $("#startdate").datepicker();
                     $("#enddate").datepicker();
-                    $(document).on('click', "input.clarity-grade-model-item", function () {
-                        $.get("/api/activateclaritygrademodel?trainingtimestamp="+this.id, function(data, status) {
-                           alert(data)
-                           get_training_results()
-                        });
-                    });
-                    get_training_jobs()
-                    get_training_uploads()
-                    get_training_results()
+                    get_inclusion_training_uploads()
+                    get_inclusion_training_results()
                 });
 
             </script>
@@ -223,6 +187,12 @@
                 $("form#logoutform").submit(function(e) {
                     $.get("/api/logout")
                         .then((resp) => {
+                    });
+                });
+                $(document).on('click', "input.inclusion-grade-model-item", function () {
+                    $.get("/api/activatenclusionmodel?trainingtimestamp="+this.id, function(data, status) {
+                        alert(data)
+                        get_training_results()
                     });
                 });
 
@@ -246,16 +216,16 @@
                     .catch(() => alert('oh no!'));
                 });
 
-                $("form#trainingform").submit(function(e) {
+                $("form#inclusiontrainingform").submit(function(e) {
                     e.preventDefault();    
                     $("#trainingimg").show();
 
                     let formData = new FormData()
-                    formData.append('files', document.getElementById('training').files[0], 'training.xlsx')
-                    formData.append('files', document.getElementById('test').files[0], 'test.xlsx')
+                    formData.append('files', document.getElementById('inclusiontraining').files[0], 'training.xlsx')
+                    formData.append('files', document.getElementById('inclusiontest').files[0], 'test.xlsx')
 
                     $.ajax({
-                        url: "/api/runningtraining",
+                        url: "/api/runinclusiontraining",
                         type: 'POST',
                         data: formData,
                         success: function (data) {
