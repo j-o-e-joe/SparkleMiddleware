@@ -631,7 +631,7 @@ router.get('/api/getinclusiontraininguploads',
             for (var i = 0; i < rows.length; i++) {
                 rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
                 rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkleinclusiontraining&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
-                if (rows[i].value.confusionmatrix != undefined) {
+                if (rows[i].value.roc_ar != undefined) {
                     rows[i].value.completed = 'Yes'
                 } else {
                     rows[i].value.completed = 'No'
