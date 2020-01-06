@@ -43,7 +43,7 @@
                         <div class="col-md-5">
                             <table class="table">
                                 <tbody>
-                                    <tr><td><a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/gia/manifest.plist">Install Autoplot GIA 0.0.19</a>
+                                    <tr><td><a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/gia/manifest.plist">Install Autoplot GIA 0.0.20</a>
                                     </td></tr>
                                     <tr><td> <a href="itms-services://?action=download-manifest&url=https://motionSensorStore.mybluemix.net/testapps/manifest.plist">Install Autoplot IBM 0.0.19</a>
                                     </td></tr>
@@ -154,7 +154,6 @@
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
             <script>
                 const transporterurl = "http://localhost:8080";
-                const cisgofilepath = "/getFileData?filewithPath=/Users/josephligman/Desktop/Cisgo/";
 
                 function get_cisgo_items(controlnumber) {
                   $("#cisgoitems").empty();
@@ -272,29 +271,32 @@
                 // Function to get the zip file from the transporter
                 function get_zip_from_transporter(controlno) {
         
-                    var url = transporterurl + cisgofilepath + controlno + '.zip'
+                    var url = transporterurl + "/getSparkleZip?controlno=" + controlno
                     var request = new XMLHttpRequest();
                     request.responseType = 'blob';
     
                     request.onreadystatechange = function() {
                         if (request.readyState === 4) {
-                            var formData = new FormData();
-                            formData.append("control", controlno);
-                            formData.append("cisgouser", "transporteruser");
-                            formData.append("cisgodevice", "transporter");
-                            formData.append("file", request.response);
-
-                            $.ajax({
-                                url: "/api/setitemcontents",
-                                type: 'POST',
-                                data: formData,
-                                success: function (data) {
-                                    alert(data)
-                                },
-                                cache: false,
-                                contentType: false,
-                                processData: false
-                            });
+                            if (request.response.type == 'application/zip') {
+                                var formData = new FormData();
+                                formData.append("control", controlno);
+                                formData.append("cisgouser", "transporteruser");
+                                formData.append("cisgodevice", "transporter");
+                                formData.append("file", request.response);
+                                $.ajax({
+                                    url: "/api/setitemcontents",
+                                    type: 'POST',
+                                    data: formData,
+                                    success: function (data) {
+                                        alert(data)
+                                    },
+                                    cache: false,
+                                    contentType: false,
+                                    processData: false
+                                });
+                            } else {
+                                alert(new Error('Invalid type returned from Transporter.'));
+                            }   
                         }
                     }
                 
@@ -365,6 +367,13 @@
                         processData: false
                     });
                    
+                });
+
+                $("#transporter_control").keypress(function (e) {
+                    if (e.which == 13) {
+                        get_zip_from_transporter(document.getElementById('transporter_control').value)
+                        return false; 
+                    }
                 });
                 
             </script>

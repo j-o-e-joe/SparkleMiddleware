@@ -276,7 +276,6 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         b_low_item.protocol = b_crown_low.protocol;
         b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
         b_low_item.sparkleprocessed = false;
-
         cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
             runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
             resolve(controlnumber)
@@ -453,7 +452,7 @@ router.post('/api/setitemcontents',
     var cisgotimestamp = new Date(new Date().toUTCString()).toISOString();
     var cisgouser = req.body.cisgouser;
     var cisgodevice = req.body.cisgodevice;
-   
+
     var filebody = req.file.buffer;
     var zip = new AdmZip(filebody);
     var zipEntries = zip.getEntries();
@@ -510,7 +509,7 @@ router.post('/api/setitemcontents',
         return
     }
     if (filemap.get('b_crown_high') === undefined) {
-        res.write('Invalid input: A Crown High not found!');
+        res.write('Invalid input: B Crown High not found!');
         res.end();
         return
     }
@@ -650,9 +649,9 @@ router.get('/api/getinclusiontraininguploads',
 );
 
 router.get('/api/getinclusiontrainingresults', 
-    // passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-    //     session: false
-    // }),
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
     function(req, res) {  
         cloudant_data.getInclusionTrainingItems(db).then((rows) =>{
             var trows = []
