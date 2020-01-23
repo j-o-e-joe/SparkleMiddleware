@@ -239,9 +239,9 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
 
         if (filemap.has('asc')) {
             var asc = filemap.get('asc');
-            additemtodatastore("cisgo", asc, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+            additemtodatastore("heliumasc", asc, cisgotimestamp, controlnumber).then(()=>{
                 var asc_item = new Object();
-                asc_item.bucketname = "cisgo";
+                asc_item.bucketname = "heliumasc";
                 asc_item.cisgotimestamp = cisgotimestamp;
                 asc_item.cisgousername = cisgouser;
                 asc_item.cisgodevice = cisgodevice;
@@ -253,6 +253,7 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
                 }).catch((e)=>{ 
                     reject(e)
                 })
+            }).catch((e)=>{
             });
         }
       
