@@ -755,6 +755,30 @@ router.get('/api/getcisgoitems',
     }
 );
 
+router.get('/api/getascitems', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        var controlnumber = req.query.controlnumber;
+        cloudant_data.getASCCloudantItems(db, controlnumber).then((rows) =>{
+            var crows = []
+            for (var i = 0; i < rows.length; i++) {
+                var ctrlnumber = rows[i].value.controlnumber
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=heliumasc&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                crows.push(rows[i]);    
+            }
+            var item = new Object();
+            item.rows = crows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
 router.get('/api/getplotitems',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false

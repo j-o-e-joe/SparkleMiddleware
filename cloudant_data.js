@@ -101,6 +101,21 @@ module.exports = {
             });
         });
     },
+    getASCCloudantItems: function(db, controlnumber) {
+        return new Promise((resolve, reject)=>{
+            db.search('all', 'asc_by_controlnumber', { 'include_docs': true, q: 'controlnumber:' + controlnumber + '*' }, function(err, result) {
+                if (err) {
+                    reject(err)
+                } else {
+                    var rows = []
+                    for (var i = 0; i < result.rows.length; i++) {
+                        rows.push({value: result.rows[i].doc});    
+                    }
+                    resolve(rows)
+                }
+            });
+        });
+    },
     getSparkleCloudantItems: function(db, controlnumber) {
         return new Promise((resolve, reject)=>{
             db.search('all', 'sparkle_by_controlnumber', { 'include_docs': true, q: 'controlnumber:' + controlnumber + '*' }, function(err, result) {

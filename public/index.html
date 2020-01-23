@@ -118,6 +118,13 @@
                         <hr>
                         <div class="row">
                             <div class="col-md-5">
+                                <h4 class="display-5">ASC Files</h4>
+                                <table class='table' id="ascitems"></table>
+                            </div>
+                        </div> 
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-5">
                                 <h4 class="display-5">Predicted Plots</h4>
                                 <table class='table' id="plotitems"></table>
                             </div>
@@ -160,18 +167,36 @@
                   $.get("/api/getcisgoitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>Sparkle Processed</th><th>File</th>" );  
+                        rows.push("<tr><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.cisgousername 
                                                     + "</td><td>" + object.value.cisgodevice 
                                                     + "</td><td>" + object.value.protocol 
-                                                    + "</td><td>" + object.value.sparkleprocessed
                                                     + "</td><td>" + object.value.fileanchor
 								                    + "</td></tr>");
                         });
                         $("#cisgoitems").append(rows.join(""));
+                    });
+                }
+
+                function get_asc_items(controlnumber) {
+                  $("#ascitems").empty();
+                  $.get("/api/getascitems?controlnumber=" + controlnumber, function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object.value.controlnumber 
+                                                    + "</td><td>" + object.value.cisgotimestamp 
+                                                    + "</td><td>" + object.value.cisgousername 
+                                                    + "</td><td>" + object.value.cisgodevice 
+                                                    + "</td><td>" + object.value.protocol 
+                                                    + "</td><td>" + object.value.fileanchor
+								                    + "</td></tr>");
+                        });
+                        $("#ascitems").append(rows.join(""));
                     });
                 }
 
@@ -273,7 +298,6 @@
         
                     var url = transporterurl + "/getSparkleZip?controlno=" + controlno
                     var request = new XMLHttpRequest();
-                    request.responseType = 'blob';
     
                     request.onreadystatechange = function() {
                         if (request.readyState === 4) {
@@ -295,7 +319,7 @@
                                     processData: false
                                 });
                             } else {
-                                alert(new Error('Invalid type returned from Transporter.'));
+                                alert(request.responseText);
                             }   
                         }
                     }
@@ -320,6 +344,7 @@
                     cisgofilterbutton.addEventListener('click', function() {
                         var filterbytext = $('#filter-cisgo-control').val();
                         get_cisgo_items(filterbytext)
+                        get_asc_items(filterbytext)
                         get_plot_items(filterbytext)
                         get_grade_items(filterbytext)
                         get_report_items(filterbytext)
