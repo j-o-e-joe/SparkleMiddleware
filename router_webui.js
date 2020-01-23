@@ -70,7 +70,7 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
 }
 
 function updateclaritygradingmodel(trainingtimestamp) {
-    return new Promise((resolve, reject)=>{
+     return new Promise((resolve, reject)=>{
         var auth = "Basic " + new Buffer.from(serverauth.user + ":" + serverauth.password).toString("base64");
         const options = {
             url: serverauth.url + 'updateclaritygradingmodel?trainingtimestamp='+ trainingtimestamp,
@@ -237,6 +237,24 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
             return
         });
 
+        if (filemap.has('asc')) {
+            var asc = filemap.get('asc');
+            additemtodatastore("cisgo", asc, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+                var asc_item = new Object();
+                asc_item.bucketname = "cisgo";
+                asc_item.cisgotimestamp = cisgotimestamp;
+                asc_item.cisgousername = cisgouser;
+                asc_item.cisgodevice = cisgodevice;
+                asc_item.controlnumber = controlnumber;
+                asc_item.protocol = asc.protocol;
+                asc_item.filepath = cisgotimestamp + "/" + asc.protocol + "/" + asc.filename;
+                asc_item.sparkleprocessed = false;
+                cloudant_data.addItemToCloudantDB(db, asc_item).then(()=>{    
+                }).catch((e)=>{ 
+                    reject(e)
+                })
+            });
+        }
       
         var a_crown_item = new Object();
         a_crown_item.bucketname = "cisgo";
@@ -464,7 +482,7 @@ router.post('/api/setitemcontents',
         var entryname = path.basename(zipEntries[i].entryName);
         if (entryname != '__MACOSX') {
             var ext = entryname.split('.').pop()
-            if(ext == "jpg" || ext == "jpeg") {
+            if (ext == "jpg" || ext == "jpeg") {
                 
                 var components = entryname.split('_');
                 if (components.length > 2) {
@@ -495,6 +513,13 @@ router.post('/api/setitemcontents',
                         }
                     } 
                 }
+            } else if (ext == "asc") {
+                var fileitem = new Object();
+                fileitem.controlnumber = components[0];
+                fileitem.protocol = "ASC" 
+                fileitem.filename = entryname
+                fileitem.data = data;
+                filemap.set('asc', fileitem);
             } 
         }
     }
@@ -682,14 +707,15 @@ router.get('/api/activateclaritygrademodel',
         session: false
     }),
     function(req, res) {
+        res.write("Not Available");
+        res.end();
         // var trainingtimestamp = req.query.trainingtimestamp;  
         // var promises = []
         // promises.push(updateclaritygradingmodel(trainingtimestamp))
-        // promises.push(updateclaritygradingmodel2(trainingtimestamp))
+        // //promises.push(updateclaritygradingmodel2(trainingtimestamp))
         // Promise.all(promises).then(()=>{
         //     res.write('Model ' + trainingtimestamp + ' has been activated.');
-            res.write("Not yet implemented")
-            res.end();
+        //     res.end();
         // }).catch((e)=>{
         //     res.write(`ERROR: ${e.code} - ${e.message}\n`);
         //     res.end();
