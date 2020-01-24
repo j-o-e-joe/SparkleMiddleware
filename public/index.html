@@ -298,7 +298,7 @@
         
                     var url = transporterurl + "/getSparkleZip?controlno=" + controlno
                     var request = new XMLHttpRequest();
-    
+                    request.responseType = 'blob';
                     request.onreadystatechange = function() {
                         if (request.readyState === 4) {
                             if (request.response.type == 'application/zip') {
