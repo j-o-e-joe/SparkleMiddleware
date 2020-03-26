@@ -9,12 +9,103 @@ const cloudant_data = require('./cloudant_data');
 const config = require('./config');
 const fs = require('fs');
 const path = require('path');
+const amqp = require("amqplib");
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
 
 var db = cloudant_data.initDBConnection();
 var router = express.Router();
+
+
+var rabbit_services = []
+if (process.env.VCAP_SERVICES) {
+    rabbit_services = config.getRabbitMQCredentials(process.env.VCAP_SERVICES);
+} else { 
+    rabbit_services = config.getRabbitMQCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
+}
+let rabbitConn = rabbit_services.connection.amqps;
+let caCert = Buffer.from(rabbitConn.certificate.certificate_base64, 'base64');
+let connectionString = rabbitConn.composed[0];
+let open = amqp.connect(connectionString, { ca: [caCert] });
+open
+  .then(conn => {
+    return conn.createChannel();
+  })
+  .then(ch => {
+    return ch.assertQueue("sparkle_pipeline", { autoDelete: false, durable: false });
+  })
+  .catch(err => {
+    console.err(err);
+});
+
+open
+  .then(conn => {
+    return conn.createChannel();
+  })
+  .then(ch => {
+    return ch.assertQueue("sparkle_training", { autoDelete: false, durable: false });
+  })
+  .catch(err => {
+    console.err(err);
+});
+
+var sparklepipelinelogs = []
+open.then(conn => {
+    return conn.createChannel();
+})
+.then(ch => {
+    var exchange = 'sparkle_pipeline_logs';
+    return ch
+    .assertExchange(exchange, "fanout", { durable: false })
+    .then(() => {
+        return ch.assertQueue('', { exclusive: true });
+    })
+    .then(q => {
+        sparklepipelinelogs = []
+        ch.bindQueue(q.queue, exchange, '');
+        ch.consume(q.queue, function(msg) {
+            if(msg.content) {
+                sparklepipelinelogs.push(msg.content.toString());
+            }
+        }, {
+            noAck: true
+        });
+    });
+})
+.catch(err => {
+    console.err(err);
+});
+
+var sparkletraininglogs = []
+open.then(conn => {
+    return conn.createChannel();
+})
+.then(ch => {
+    var exchange = 'sparkle_training_logs';
+    console.log(exchange)
+    return ch
+    .assertExchange(exchange, "fanout", { durable: false })
+    .then(() => {
+        return ch.assertQueue('', { exclusive: true });
+    })
+    .then(q => {
+        sparkletraininglogs = []
+        ch.bindQueue(q.queue, exchange, '');
+        ch.consume(q.queue, function(msg) {
+            if(msg.content) {
+                console.log(msg.content.toString())
+                sparkletraininglogs.push(msg.content.toString());
+            }
+        }, {
+            noAck: true
+        });
+    });
+})
+.catch(err => {
+    console.err(err);
+});
+
 
 function additemtodatastore(bucketname, fileitem, cisgotimestamp, controlnumber) {
     return new Promise((resolve, reject)=>{
@@ -40,172 +131,51 @@ function removeitemfromdatastore(bucketname, fileitem, cisgotimestamp, controlnu
     })
 }
 
-var serverauth = config.getServerAuth(fs.readFileSync("vcap-local.json", "utf-8"))
 function runsparkleprocessing(controlnumber, cisgotimestamp) {
     return new Promise((resolve, reject)=>{
-        var auth = "Basic " + new Buffer.from(serverauth.user + ":" + serverauth.password).toString("base64");
-        const options = {
-            url: serverauth.url + 'runsparkleprocessing?controlnumber='+ controlnumber 
-            + '&cisgotimestamp=' + cisgotimestamp,
-            headers: {
-            'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned-2.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                }
-            }
-        };
-        
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                resolve(body);
-            } else { 
-                reject(error);
-            }
-        }
-        request(options, callback)
-    });
-}
-
-function updateclaritygradingmodel(trainingtimestamp) {
-     return new Promise((resolve, reject)=>{
-        var auth = "Basic " + new Buffer.from(serverauth.user + ":" + serverauth.password).toString("base64");
-        const options = {
-            url: serverauth.url + 'updateclaritygradingmodel?trainingtimestamp='+ trainingtimestamp,
-            headers: {
-            'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned-2.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                }
-            }
-        };
-        
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                resolve(body);
-            } else { 
-                reject(error);
-            }
-        }
-        request(options, callback)
-    });
-}
-
-var serverauth2 = config.getServerAuth2(fs.readFileSync("vcap-local.json", "utf-8"))
-function updateclaritygradingmodel2(trainingtimestamp) {
-    return new Promise((resolve, reject)=>{
-        var auth = "Basic " + new Buffer.from(serverauth2.user + ":" + serverauth2.password).toString("base64");
-        const options = {
-            url: serverauth2.url + 'updateclaritygradingmodel?trainingtimestamp='+ trainingtimestamp,
-            headers: {
-                'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                }
-            }
-        };
-        
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                resolve(body);
-            } else { 
-                reject(error);
-            }
-        }
-        request(options, callback)
-    });
-}
-
-var serverauth3 = config.getServerAuth3(fs.readFileSync("vcap-local.json", "utf-8"))
-function runclaritytraining(trainingtimestamp) {
-    return new Promise((resolve, reject)=>{
-        var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
-        const options = {
-            url: serverauth3.url + 'starttrainingclarity?trainingtimestamp='+ trainingtimestamp,
-            headers: {
-            'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned-3.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                }
-            }
-        };
-
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                resolve(body);
-            } else { 
-                reject(error);
-            }
-        }
-        request(options, callback)
-        
+        open.then(conn => {
+            return conn.createChannel();
+        })
+        .then(ch => {
+            let message = "{\"controlnumber\":\"" + controlnumber + "\", \"cisgotimestamp\":\"" + cisgotimestamp + "\"}"
+            ch.publish('', 'sparkle_pipeline', Buffer(message));
+            resolve(message);
+        })
+        .catch(err => {
+          reject(err);
+        });
     });
 }
 
 function runinclusiontraining(trainingtimestamp) {
     return new Promise((resolve, reject)=>{
-        var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
-        const options = {
-            url: serverauth3.url + 'starttraininginclusions?trainingtimestamp='+ trainingtimestamp,
-            headers: {
-            'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned-3.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                }
-            }
-        };
-
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                resolve(body);
-            } else { 
-                reject(error);
-            }
-        }
-        request(options, callback)
-        
+        open.then(conn => {
+            return conn.createChannel();
+        })
+        .then(ch => {
+            let message = "{\"trainingid\":\"" + trainingtimestamp + "\", \"trianingtype\":\"inclusions\"}"
+            ch.publish('', 'sparkle_training', Buffer(message));
+            resolve(message);
+        })
+        .catch(err => {
+          reject(err);
+        });
     });
 }
 
-function getsparkletrainingsessions() {
+function runclaritytraining(trainingtimestamp) {
     return new Promise((resolve, reject)=>{
-        var auth = "Basic " + new Buffer.from(serverauth3.user + ":" + serverauth3.password).toString("base64");
-        const options = {
-            url: serverauth3.url + 'gettrainingsessions',
-            headers: {
-            'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned-3.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                }
-            }
-        };
-
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                resolve(body);
-            } else { 
-                reject(error);
-            }
-        }
-        request(options, callback)
-        
+        open.then(conn => {
+            return conn.createChannel();
+        })
+        .then(ch => {
+            let message = "{\"trainingid\":\"" + trainingtimestamp + "\", \"trianingtype\":\"clarity\"}"
+            ch.publish('', 'sparkle_training', Buffer(message));
+            resolve(message);
+        })
+        .catch(err => {
+          reject(err);
+        });
     });
 }
 
@@ -217,23 +187,21 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         var b_crown_low = filemap.get('b_crown_low');
       
         additemtodatastore("cisgo", a_crown_wireframe, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+            console.log("failed to add item to data store")
+            console.log(e)
             reject(e)
             return
         });
         additemtodatastore("cisgo", b_crown_high, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
-            removeitemfromdatastore("cisgo", b_crown_high, cisgotimestamp, controlnumber).then(()=>{
-                reject(e)
-            }).catch((e)=>{
-                reject(e)
-            });
+            console.log("failed to add item to data store")
+            console.log(e)
+            reject(e)
             return
         });
         additemtodatastore("cisgo", b_crown_low, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
-            removeitemfromdatastore("cisgo", b_crown_low, cisgotimestamp, controlnumber).then(()=>{
-                reject(e)
-            }).catch((e)=>{
-                reject(e)
-            });
+            console.log("failed to add item to data store")
+            console.log(e)
+            reject(e)
             return
         });
 
@@ -257,54 +225,66 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
             });
         }
       
-        var a_crown_item = new Object();
-        a_crown_item.bucketname = "cisgo";
-        a_crown_item.cisgotimestamp = cisgotimestamp;
-        a_crown_item.cisgousername = cisgouser;
-        a_crown_item.cisgodevice = cisgodevice;
-        a_crown_item.controlnumber = controlnumber;
-        a_crown_item.protocol = a_crown_wireframe.protocol;
-        a_crown_item.filepath = cisgotimestamp + "/" + a_crown_wireframe.protocol + "/" + a_crown_wireframe.filename;
-        a_crown_item.sparkleprocessed = false;
-        cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
-        }).catch((e)=>{ 
-            reject(e)
-        })
+        setTimeout(function(){ 
+            var a_crown_item = new Object();
+            a_crown_item.bucketname = "cisgo";
+            a_crown_item.cisgotimestamp = cisgotimestamp;
+            a_crown_item.cisgousername = cisgouser;
+            a_crown_item.cisgodevice = cisgodevice;
+            a_crown_item.controlnumber = controlnumber;
+            a_crown_item.protocol = a_crown_wireframe.protocol;
+            a_crown_item.filepath = cisgotimestamp + "/" + a_crown_wireframe.protocol + "/" + a_crown_wireframe.filename;
+            a_crown_item.sparkleprocessed = false;
+            cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
+            }).catch((e)=>{ 
+                console.log("failed to add a_crown_item to cloudant")
+                console.log(e)
+                reject(e)
+            })
+        }, 1000); 
         
+        setTimeout(function(){ 
+            var b_high_item = new Object();
+            b_high_item.bucketname = "cisgo";
+            b_high_item.cisgotimestamp = cisgotimestamp;
+            b_high_item.cisgousername = cisgouser;
+            b_high_item.cisgodevice = cisgodevice;
+            b_high_item.controlnumber = controlnumber;
+            b_high_item.protocol = b_crown_high.protocol;
+            b_high_item.filepath = cisgotimestamp + "/" + b_crown_high.protocol + "/" + b_crown_high.filename;
+            b_high_item.sparkleprocessed = false;
+            cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
+            }).catch((e)=>{ 
+                console.log("failed to add b_high_item to cloudant")
+                console.log(e)
+                reject(e)
+            })
+        }, 1000); 
 
-        var b_high_item = new Object();
-        b_high_item.bucketname = "cisgo";
-        b_high_item.cisgotimestamp = cisgotimestamp;
-        b_high_item.cisgousername = cisgouser;
-        b_high_item.cisgodevice = cisgodevice;
-        b_high_item.controlnumber = controlnumber;
-        b_high_item.protocol = b_crown_high.protocol;
-        b_high_item.filepath = cisgotimestamp + "/" + b_crown_high.protocol + "/" + b_crown_high.filename;
-        b_high_item.sparkleprocessed = false;
-        cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
-        }).catch((e)=>{ 
-            reject(e)
-        })
+        setTimeout(function(){ 
+            var b_low_item = new Object();
+            b_low_item.bucketname = "cisgo";
+            b_low_item.cisgotimestamp = cisgotimestamp;
+            b_low_item.cisgousername = cisgouser;
+            b_low_item.cisgodevice = cisgodevice;
+            b_low_item.controlnumber = controlnumber;
+            b_low_item.protocol = b_crown_low.protocol;
+            b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
+            b_low_item.sparkleprocessed = false;
+            cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
+                runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
+                resolve(controlnumber)
+            }).catch((e)=>{ 
+                console.log("failed to add b_low_item to cloudant")
+                console.log(e)
+                reject(e)
+            })
+        }, 1000); 
+        
+    }).catch((e)=>{
+        reject(e)
+    });
 
-        var b_low_item = new Object();
-        b_low_item.bucketname = "cisgo";
-        b_low_item.cisgotimestamp = cisgotimestamp;
-        b_low_item.cisgousername = cisgouser;
-        b_low_item.cisgodevice = cisgodevice;
-        b_low_item.controlnumber = controlnumber;
-        b_low_item.protocol = b_crown_low.protocol;
-        b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
-        b_low_item.sparkleprocessed = false;
-        cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
-            runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
-            resolve(controlnumber)
-        }).catch((e)=>{ 
-            reject(e)
-        })
-
-        }).catch((e)=>{
-            reject(e)
-        });
     });
 }
 
@@ -325,7 +305,7 @@ router.get('/api/logout', function(req, res) {
     res.redirect('https://us-south.appid.cloud.ibm.com/oauth/v4/153281e8-9e03-40ec-93a1-0e5b2be7ef68')
 });
 
-router.post('/api/runningtraining', 
+router.post('/api/runclaritytraining', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
     }),
@@ -455,12 +435,39 @@ router.post('/api/runinclusiontraining',
    
 );
 
+router.get('/api/getsparklepipelinestatus',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {        
+        var item = new Object();
+        item.rows = sparklepipelinelogs
+        res.json(item);
+        res.end();
+        sparklepipelinelogs = []
+    }
+);
+
+router.get('/api/getsparkletrainingstatus',
+    // passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+    //     session: false
+    // }),
+    function(req, res) {        
+        var item = new Object();
+        item.rows = sparkletraininglogs
+        res.json(item);
+        res.end();
+        sparkletraininglogs = []
+    }
+);
+
+
 router.post('/api/setitemcontents', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
     }),
     upload.single('file'), async (req, res) => {
-    
+
     if (req.file == undefined) {
         res.write("Invalid Input!")
         res.end()
@@ -703,27 +710,6 @@ router.get('/api/getinclusiontrainingresults',
     }
 );
 
-router.get('/api/activateclaritygrademodel', 
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) {
-        res.write("Not Available");
-        res.end();
-        // var trainingtimestamp = req.query.trainingtimestamp;  
-        // var promises = []
-        // promises.push(updateclaritygradingmodel(trainingtimestamp))
-        // //promises.push(updateclaritygradingmodel2(trainingtimestamp))
-        // Promise.all(promises).then(()=>{
-        //     res.write('Model ' + trainingtimestamp + ' has been activated.');
-        //     res.end();
-        // }).catch((e)=>{
-        //     res.write(`ERROR: ${e.code} - ${e.message}\n`);
-        //     res.end();
-        // })
-    }
-);
-
 router.get('/api/getcisgoitems', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
@@ -733,16 +719,31 @@ router.get('/api/getcisgoitems',
         cloudant_data.getCisgoCloudantItems(db, controlnumber).then((rows) =>{
             var crows = []
             for (var i = 0; i < rows.length; i++) {
-                var ctrlnumber = rows[i].value.controlnumber
-                var v = crows.find(e => e.value.controlnumber === ctrlnumber);
-                if (v != undefined) {
-                    v.value.sparkleprocessed += '<br/>' + rows[i].value.sparkleprocessed;
-                    v.value.protocol += '<br/>' + rows[i].value.protocol;
-                    v.value.fileanchor += "<br/><a href='/api/getobject?bucketname=cisgo&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
-                } else {
-                    rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=cisgo&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
-                    crows.push(rows[i]);    
-                }
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=cisgo&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                crows.push(rows[i]);    
+            }
+            var item = new Object();
+            item.rows = crows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/getsparkletableitems', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        var controlnumber = req.query.controlnumber;
+        cloudant_data.getSparkleCloudantItems(db, controlnumber).then((rows) =>{
+            var crows = []
+            for (var i = 0; i < rows.length; i++) {
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=sparkletableprocessing&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                crows.push(rows[i]);    
             }
             var item = new Object();
             item.rows = crows
@@ -923,28 +924,6 @@ router.get('/api/gettrainingbaselist',
             res.write(new Buffer.from(wbout), 'binary');
             res.end();
            
-        }).catch((e)=>{
-            res.write(`ERROR: ${e.code} - ${e.message}\n`);
-            res.end();
-        })
-    }
-);
-
-router.get('/api/gettrainingsessions',
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) {
-        getsparkletrainingsessions().then((data)=>{
-            cloudant_data.getTrainingSessions(db).then((rows) =>{
-                var item = new Object();
-                item.rows = rows
-                res.json(item);
-                res.end();
-            }).catch((e)=>{
-                res.write(`ERROR: ${e.code} - ${e.message}\n`);
-                res.end();
-            })
         }).catch((e)=>{
             res.write(`ERROR: ${e.code} - ${e.message}\n`);
             res.end();

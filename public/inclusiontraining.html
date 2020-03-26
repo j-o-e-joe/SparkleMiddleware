@@ -14,6 +14,7 @@
         <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
  
         <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" type="text/css" href="local.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         </head>
         <body>
@@ -24,9 +25,6 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="index.html">Auto Plot</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="trainingsessions.html">Training Sessions</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="claritytraining.html">Clarity Training</a>
@@ -100,8 +98,20 @@
                             </form>
                         </div>
                     </div>
-                </div>
+                    <div class="row">
+                        <div class="col-md-30">
+                            <div class="tableFixHead">
+                                <table id="ziprstatus">
+                                    <thead>
+                                        <tr><th></th></tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>  
             </div>
+
             <div class="jumbotron">
                     <div class="container">
                         <div class="row">
@@ -182,8 +192,24 @@
                     });
                 }
 
+                function getsparklelogs() {
+                    $.get('/api/getsparkletrainingstatus', function(data) {
+                        console.log(data);  
+                        var rows = [];
+                        $.each(data.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object + "</td></tr>");
+                        });
+                       
+                        $("#ziprstatus").append(rows.join(""));
+                        setTimeout(getsparklelogs, 5000);
+                     });
+                }
 
                 $().ready(()=>{
+                    var $th = $('.tableFixHead').find('thead th')
+                    $('.tableFixHead').on('scroll', function() {
+                    $th.css('transform', 'translateY('+ this.scrollTop +'px)');
+                    });
                     $.get("/api/user")
                     .then((resp) => {
                         $("#user").text(resp.user.name);
@@ -193,6 +219,7 @@
                     $("#enddate").datepicker();
                     get_inclusion_training_uploads()
                     get_inclusion_training_results()
+                    getsparklelogs()
                 });
 
             </script>

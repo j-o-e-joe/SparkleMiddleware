@@ -14,6 +14,7 @@
         <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
  
         <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" type="text/css" href="local.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         </head>
         <body>
@@ -24,9 +25,6 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="index.html">Auto Plot</a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="trainingsessions.html">Training Sessions</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="inclusiontraining.html">Inclusion Training</a>
@@ -99,8 +97,21 @@
                             </form>
                         </div>
                     </div>
-                </div>
+                    <div class="row">
+                        <div class="col-md-30">
+                            <div class="tableFixHead">
+                                <table id="ziprstatus">
+                                    <thead>
+                                        <tr><th></th></tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>  
             </div>
+
+
             <div class="jumbotron">
                     <div class="container">
                         <div class="row">
@@ -164,24 +175,41 @@
                   $.get("/api/getclaritytrainingresults", function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th><th>Model Active</th>" );  
+                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Model Active</th><th>Use Relief</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th>" );  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td><input type=\"button\" class=\"clarity-grade-model-item\" id=\"" + object.value.trainingtimestamp + "\" value=\"Activate\">"
                                                     + "</td><td>" + object.value.trainingtimestamp 
+                                                    + "</td><td>" + object.value.active 
+                                                    + "</td><td>" + object.value.use_relief
                                                     + "</td><td>" + object.value.trainingfile 
                                                     + "</td><td>" + object.value.testfile 
                                                     + "</td><td>" + object.value.confusionmatrix 
                                                     + "</td><td>" + object.value.ensembletable 
                                                     + "</td><td>" + object.value.testsplitimages
-                                                    + "</td><td>" + object.value.active 
 								                    + "</td></tr>");
                         });
                         $("#trainingresults").append(rows.join(""));
                     });
                 }
 
+                function getsparklelogs() {
+                    $.get('/api/getsparkletrainingstatus', function(data) {
+                        console.log(data);  
+                        var rows = [];
+                        $.each(data.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object + "</td></tr>");
+                        });
+                       
+                        $("#ziprstatus").append(rows.join(""));
+                        setTimeout(getsparklelogs, 5000);
+                     });
+                }
 
                 $().ready(()=>{
+                    var $th = $('.tableFixHead').find('thead th')
+                    $('.tableFixHead').on('scroll', function() {
+                    $th.css('transform', 'translateY('+ this.scrollTop +'px)');
+                    });
                     $.get("/api/user")
                     .then((resp) => {
                         $("#user").text(resp.user.name);
@@ -197,6 +225,7 @@
                     });
                     get_training_uploads()
                     get_training_results()
+                    getsparklelogs()
                 });
 
             </script>
@@ -241,6 +270,7 @@
                         data: formData,
                         success: function (data) {
                             alert(data)
+                            getsparklelogs();     
                             $("#trainingimg").hide();
                         },
                         cache: false,

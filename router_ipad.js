@@ -1,11 +1,11 @@
 const express = require('express');
 const passport = require('passport');
 const multer  = require('multer');
-const request = require('request')
 const s3_data = require('./s3_data');
 const cloudant_data = require('./cloudant_data');
 const config = require('./config');
 const fs = require('fs');
+const http = require('http');
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
@@ -21,41 +21,37 @@ router.get('/api/getclaritygrade',
         session: false
     }),
     function(req, res)  {
-
         var controlnumber = req.query.controlnumber;
         var cisgotimestamp = req.query.cisgotimestamp;
         var sparkletimestamp = req.query.sparkletimestamp;
         var plottimestamp = req.query.plottimestamp;
 
-        var auth = "Basic " + new Buffer.from(serverauth.user + ":" + serverauth.password).toString("base64");
-        request.debug = true
-
         const options = {
-            url: serverauth.url + 'getclaritygrade?controlnumber='+ controlnumber 
-            + '&cisgotimestamp=' + cisgotimestamp 
-            + '&sparkletimestamp='+ sparkletimestamp
-            + '&plottimestamp=' + plottimestamp, 
-            headers: {
-            'Authorization' : auth
-            },
-            agentOptions: {
-                ca: fs.readFileSync('nginx-selfsigned.crt', {encoding: 'utf-8'}),
-                checkServerIdentity: function (host, cert) {
-                    return undefined;
-                  }
-            }
-        };
-        
-        function callback(error, response, body) {
-            if (!error && response.statusCode == 200) {
-                res.write(body);
-                res.end();
-            } else { 
-                res.write('Error Received: ' + error);
-                res.end();
-            }
+          hostname: '150.238.45.85',
+          port: 16000,
+          path: '/getclaritygrade?controlnumber='+ controlnumber 
+          + '&cisgotimestamp=' + cisgotimestamp 
+          + '&sparkletimestamp='+ sparkletimestamp
+          + '&plottimestamp=' + plottimestamp,
+          method: 'GET'
         }
-        request(options, callback);
+        
+        const http_req = http.request(options, http_res => {
+          console.log(`statusCode: ${http_res.statusCode}`)
+        
+          http_res.on('data', d => {
+            console.log(d);
+            res.write(d);
+            res.end();
+          })
+        })
+        
+        http_req.on('error', error => {
+            res.write('Error Received: ' + error);
+            res.end();
+        })
+        
+        http_req.end()
      }
 );  
 
@@ -102,6 +98,44 @@ router.get('/api/getreportbycontrolid',
             res.write('Error Received: ' + e);
             res.end();
         });
+    }
+);
+
+router.get('/api/getactiveclaritymodel', 
+    passport.authenticate(APIStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        cloudant_data.getActiveClarityModel(db).then((obj)=>{
+            res.json(obj)
+            res.end();
+        }).catch((e)=>{
+            res.write('Error Received: ' + e);
+            res.end();
+        });
+    }
+);
+
+router.get('/api/getclaritymodel',
+    passport.authenticate(APIStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        var trainingid = req.query.modelid;
+        var modelname = req.query.modelname
+        console.log(trainingid)
+        console.log(modelname)
+        var filepath = trainingid + '/' + modelname;
+        console.log(filepath)
+        s3_data.getItemFromStorage('sparkletraining', filepath).then((data)=>{
+            res.setHeader('Content-disposition', 'attachment; filename=' + filepath);
+            res.writeHead(200, {'Content-Type': 'application/octet-stream'});
+            res.write(data.Body, 'binary');
+            res.end(null, 'binary');
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
     }
 );
 

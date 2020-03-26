@@ -2,6 +2,7 @@
 applications:
  - name: GIA Autoplot
    random-route: true
-   memory: 256M
+   memory: 1GB
    services:
    - GIA_CloudantDB
+   - sparklepipelinerabbitmq

@@ -11,6 +11,7 @@
         <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/jumbotron/">
     
         <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" type="text/css" href="local.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
         </head>
         <body>
@@ -18,9 +19,6 @@
              <ul class="navbar-nav mr-auto">
                 <li class="nav-item active">
                   <a class="nav-link" href="#">Auto Plot <span class="sr-only">(current)</span></a>
-                </li>
-                <li class="nav-item">
-                  <a class="nav-link" href="trainingsessions.html">Training Sessions</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="claritytraining.html">Clarity Training</a>
@@ -67,6 +65,9 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="col-md-5">
+                            <div  id="transporterstatus"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -92,6 +93,15 @@
                                 </table>
                             </form>
                         </div>
+                        <div class="col-md-5">
+                            <div class="tableFixHead">
+                                <table id="ziprstatus">
+                                    <thead>
+                                        <tr><th></th></tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -113,6 +123,13 @@
                             <div class="col-md-5">
                                 <h4 class="display-5">Cisgo Images</h4>
                                 <table class='table' id="cisgoitems"></table>
+                            </div>
+                        </div> 
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <h4 class="display-5">Sparkle Table Processing</h4>
+                                <table class='table' id="sparkletableprocessing"></table>
                             </div>
                         </div> 
                         <hr>
@@ -167,9 +184,10 @@
                   $.get("/api/getcisgoitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
+                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td>" + object.value.controlnumber 
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-cisgo-item\" id=\"" + object.value._id + "&bucketname=cisgo&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                                                    + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.cisgousername 
                                                     + "</td><td>" + object.value.cisgodevice 
@@ -181,14 +199,33 @@
                     });
                 }
 
+                function get_sparkle_table_processing_items(controlnumber) {
+                  $("#sparkletableprocessing").empty();
+                  $.get("/api/getsparkletableitems?controlnumber=" + controlnumber, function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>File</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-sparkle-table-item\" id=\"" + object.value._id + "&bucketname=sparkletableprocessing&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                                                    + "</td><td>" + object.value.controlnumber 
+                                                    + "</td><td>" + object.value.cisgotimestamp 
+                                                    + "</td><td>" + object.value.sparkletabletimestamp 
+                                                    + "</td><td>" + object.value.fileanchor
+								                    + "</td></tr>");
+                        });
+                        $("#sparkletableprocessing").append(rows.join(""));
+                    });
+                }
+
                 function get_asc_items(controlnumber) {
                   $("#ascitems").empty();
                   $.get("/api/getascitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
+                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td>" + object.value.controlnumber 
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-asc-item\" id=\"" + object.value._id + "&bucketname=heliumasc&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                                                    + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.cisgousername 
                                                     + "</td><td>" + object.value.cisgodevice 
@@ -205,7 +242,7 @@
                   $.get("/api/getplotitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th>Username</th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Table Timestamp</th><th>Plot Timestamp</th><th>Device</th><th>Grade Processed</th><th>Model Version</th><th>File</th>" );  
+                        rows.push("<tr><th></th><th>Username</th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Table Timestamp</th><th>Plot Timestamp</th><th>Device</th><th>Grade Processed</th><th>Training Id</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td><input type=\"button\" class=\"delete-plot-item\" id=\"" + object.value._id + "&bucketname=csplots&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.plotusername
@@ -228,15 +265,20 @@
                   $.get("/api/getgradeitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th>Username</th><th>Cisgo Timestamp</th><th>Plot Timestamp</th><th>Control Number</th><th>GIA Grade</th><th>Continuous Score</th><th>High Clarity</th><th>VS1</th><th>VS2</th><th>SI1</th><th>SI2</th><th>I1</th><th>I2</th><th>I3</th>");  
+                        rows.push("<tr><th></th><th>Username</th><th>Cisgo Timestamp</th><th>Plot Timestamp</th><th>Grade Timestamp</th><th>Training Id</th><th>Control Number</th><th>GIA Grade</th><th>Continuous Score</th><th>A Score</th><th>B Score</th><th>C Score</th><th>High Clarity</th><th>VS1</th><th>VS2</th><th>SI1</th><th>SI2</th><th>I1</th><th>I2</th><th>I3</th>");  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td><input type=\"button\" class=\"delete-grade-item\" id=\"" + object.value._id + "\" value=\"Delete\">"
                                         + "</td><td>" + object.value.user 
                                         + "</td><td>" + object.value.cisgotimestamp
                                         + "</td><td>" + object.value.plottimestamp
+                                        + "</td><td>" + object.value.gradetimestap
+                                        + "</td><td>" + object.value.trainingid
                                         + "</td><td>" + object.value.controlnumber
                                         + "</td><td>" + object.value.gia_grade
                                         + "</td><td>" + object.value.continuous_grade
+                                        + "</td><td>" + object.value.model_a_score
+                                        + "</td><td>" + object.value.model_b_score
+                                        + "</td><td>" + object.value.model_c_score
                                         + "</td><td>" + object.value.high_clarity
                                         + "</td><td>" + object.value.vs1
                                         + "</td><td>" + object.value.vs2
@@ -339,16 +381,43 @@
                     });
                     $("#loadingimg").hide();
                     $("#trainingimg").hide();
+                    
+                    var $th = $('.tableFixHead').find('thead th')
+                    $('.tableFixHead').on('scroll', function() {
+                    $th.css('transform', 'translateY('+ this.scrollTop +'px)');
+                    });
 
                     var cisgofilterbutton = document.getElementById("filter-cisgo");
                     cisgofilterbutton.addEventListener('click', function() {
                         var filterbytext = $('#filter-cisgo-control').val();
                         get_cisgo_items(filterbytext)
+                        get_sparkle_table_processing_items(filterbytext)
                         get_asc_items(filterbytext)
                         get_plot_items(filterbytext)
                         get_grade_items(filterbytext)
                         get_report_items(filterbytext)
                     }, false);
+
+                    $(document).on('click', "input.delete-cisgo-item", function () {
+                        $.get("/api/deleteitem?id="+this.id, function(data, status) {
+                            var filterbytext = $('#filter-cisgo-control').val();
+                            get_cisgo_items(filterbytext)
+                        });
+                    });
+
+                    $(document).on('click', "input.delete-sparkle-table-item", function () {
+                        $.get("/api/deleteitem?id="+this.id, function(data, status) {
+                            var filterbytext = $('#filter-cisgo-control').val();
+                            get_sparkle_table_processing_items(filterbytext)
+                        });
+                    });
+
+                    $(document).on('click', "input.delete-asc-item", function () {
+                        $.get("/api/deleteitem?id="+this.id, function(data, status) {
+                            var filterbytext = $('#filter-cisgo-control').val();
+                            get_asc_items(filterbytext)
+                        });
+                    });
 
                     $(document).on('click', "input.delete-plot-item", function () {
                         $.get("/api/deleteitem?id="+this.id, function(data, status) {
@@ -365,10 +434,24 @@
                     });
                     
                     get_transporter_status();
+                    getsparklelogs();
                 });
 
             </script>
             <script>
+                function getsparklelogs() {
+                    $.get('/api/getsparklepipelinestatus', function(data) {
+                        console.log(data);  
+                        var rows = [];
+                        $.each(data.rows, function(index, object) {
+                            rows.push( "<tr><td>" + object + "</td></tr>");
+                        });
+                       
+                        $("#ziprstatus").append(rows.join(""));
+                        setTimeout(getsparklelogs, 5000);
+                     });
+                }
+
                 $("form#logoutform").submit(function(e) {
                     $.get("/api/logout")
                         .then((resp) => {
@@ -378,6 +461,7 @@
                 $("form#uploadform").submit(function(e) {
                     e.preventDefault();    
                     $("#loadingimg").show();
+                    $('#ziprstatus').show();
                     var formData = new FormData(this);
                     $.ajax({
                         url: "/api/setitemcontents",
@@ -386,6 +470,7 @@
                         success: function (data) {
                             alert(data)
                             $("#loadingimg").hide();
+                            getsparklelogs();                           
                         },
                         cache: false,
                         contentType: false,
