@@ -1,7 +1,7 @@
 const config = require('./config');
 const fs = require('fs');
 const dbCredentials = {
-    dbName: 'sparkle'
+    dbName: 'sparkle_db'
 }
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
         if (process.env.VCAP_SERVICES) {
             dbCredentials.url = config.getDBCredentialsUrl(process.env.VCAP_SERVICES);
         } else { 
-            dbCredentials.url = config.getDBCredentialsUrl(fs.readFileSync("vcap-local.json", "utf-8"));
+        dbCredentials.url = config.getDBCredentialsUrl(fs.readFileSync("vcap-local.json", "utf-8"));
         }
         var cloudant = require('cloudant')(dbCredentials.url);
         cloudant.db.create(dbCredentials.dbName, function(err, res) {
@@ -22,13 +22,13 @@ module.exports = {
                      "_id": "_design/all",
                      "views": {
                       "cisgoitems_processed": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.cisgotimestamp && doc.sparkleprocessed == true && doc.bucketname === \"cisgo\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.cisgotimestamp && doc.sparkleprocessed == true && doc.bucketname === \"cisgoimages\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
                       },
                       "sparkletableitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkletableprocessing\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkletabledata\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "plotitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"csplots\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "gradeitems": {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.continuous_grade) {\n    emit(doc.controlnumber, doc);\n  }\n}"
@@ -37,37 +37,37 @@ module.exports = {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.sparkleprocessed == false) {\n    emit([doc.controlnumber, doc.cisgotimestamp, doc._id], doc);\n  }\n}"
                       },
                       "cisgoitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cisgo\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cisgoimages\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "reportitems": {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.report) {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "sparkletableitems_batch": {
-                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletableprocessing\" && doc.sparklemodel === \"2019-11-21T13:50:03.221926\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletabledata\" && doc.sparklemodel === \"2019-11-21T13:50:03.221926\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "plotitems_batch": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"csplots\" && doc.plotusername == 'gia') {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\" && doc.plotusername == 'gia') {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "cisgoitems_batch": {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.sparkleprocessed == false && doc.cisgousername == 'gia') {\n      emit([doc.controlnumber, doc.cisgotimestamp, doc._id], doc);\n  }\n}"
                       },
                       "sparkletrainingitems": {
-                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletraining\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletrainingclarity\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
                       },
                       "plot_timestamp_items": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"csplots\") {\n    emit(doc.plottimestamp, doc.controlnumber);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    emit(doc.plottimestamp, doc.controlnumber);\n  }\n}"
                       },
                       "sparkletrainingjobs": {
                        "map": "function (doc) {\n  if (doc.trainingid) {\n    emit(doc.trainingid, doc);\n  }\n}"
                       },
                       "sparkleinclusiontrainingitems": {
-                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkleinclusiontraining\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletraininginclusions\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
                       },
                       "cisgoitems_asc": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumasc\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumuploads\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
                       },
                       "cisgoitems_asc_aligned": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumascwireframe\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumwireframes\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
                       },
                       "cutwiseitems": {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cutwisedata\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
@@ -76,15 +76,15 @@ module.exports = {
                      "indexes": {
                       "cisgo_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cisgo\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cisgoimages\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "sparkle_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkletableprocessing\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkletabledata\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "plot_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"csplots\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "grade_by_controlnumber": {
                        "analyzer": "standard",
@@ -100,27 +100,27 @@ module.exports = {
                       },
                       "inclusion_training_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.trainingtimestamp && doc.bucketname === \"sparkleinclusiontraining\") {\n    index(\"trainingtimestamp\", doc.trainingtimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.trainingtimestamp && doc.bucketname === \"sparkletraininginclusions\") {\n    index(\"trainingtimestamp\", doc.trainingtimestamp, {store:true});\n  }\n}"
                       },
                       "asc_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumasc\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumuploads\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "plot_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"csplots\") {\n    index(\"plottimestamp\", doc.plottimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    index(\"plottimestamp\", doc.plottimestamp, {store:true});\n  }\n}"
                       },
                       "plot_by_username": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"csplots\") {\n    index(\"plotusername\", doc.plotusername, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    index(\"plotusername\", doc.plotusername, {store:true});\n  }\n}"
                       },
                       "asc_aligned_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumascwireframe\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumwireframes\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "cisgo_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.cisgotimestamp && doc.bucketname == \"cisgo\") {\n    index(\"cisgotimestamp\", doc.cisgotimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.cisgotimestamp && doc.bucketname == \"cisgoimages\") {\n    index(\"cisgotimestamp\", doc.cisgotimestamp, {store:true});\n  }\n}"
                       }
                      }
                 }

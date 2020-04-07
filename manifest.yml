@@ -1,8 +1,11 @@
 ---
 applications:
- - name: GIA Autoplot
+ - name: sparkle-pipeline
    random-route: true
    memory: 1GB
    services:
-   - GIA_CloudantDB
-   - sparklepipelinerabbitmq
+   - sparkle_pipeline_appid
+   - sparkle_pipeline_cloudant
+   - sparkle_pipeline_cos
+   - sparkle_pipeline_messages
+    

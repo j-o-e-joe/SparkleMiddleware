@@ -15,46 +15,6 @@ var router = express.Router();
 
 // iPad APIs
 const APIStrategy = require('ibmcloud-appid').APIStrategy;
-var serverauth = config.getServerAuth2(fs.readFileSync("vcap-local.json", "utf-8"))
-router.get('/api/getclaritygrade',
-    passport.authenticate(APIStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res)  {
-        var controlnumber = req.query.controlnumber;
-        var cisgotimestamp = req.query.cisgotimestamp;
-        var sparkletimestamp = req.query.sparkletimestamp;
-        var plottimestamp = req.query.plottimestamp;
-
-        const options = {
-          hostname: '150.238.45.85',
-          port: 16000,
-          path: '/getclaritygrade?controlnumber='+ controlnumber 
-          + '&cisgotimestamp=' + cisgotimestamp 
-          + '&sparkletimestamp='+ sparkletimestamp
-          + '&plottimestamp=' + plottimestamp,
-          method: 'GET'
-        }
-        
-        const http_req = http.request(options, http_res => {
-          console.log(`statusCode: ${http_res.statusCode}`)
-        
-          http_res.on('data', d => {
-            console.log(d);
-            res.write(d);
-            res.end();
-          })
-        })
-        
-        http_req.on('error', error => {
-            res.write('Error Received: ' + error);
-            res.end();
-        })
-        
-        http_req.end()
-     }
-);  
-
 router.get('/api/getcisgoitems_processed',
 	passport.authenticate(APIStrategy.STRATEGY_NAME, {
 	    session: false
@@ -127,7 +87,7 @@ router.get('/api/getclaritymodel',
         console.log(modelname)
         var filepath = trainingid + '/' + modelname;
         console.log(filepath)
-        s3_data.getItemFromStorage('sparkletraining', filepath).then((data)=>{
+        s3_data.getItemFromStorage('sparkletrainingclarity', filepath).then((data)=>{
             res.setHeader('Content-disposition', 'attachment; filename=' + filepath);
             res.writeHead(200, {'Content-Type': 'application/octet-stream'});
             res.write(data.Body, 'binary');

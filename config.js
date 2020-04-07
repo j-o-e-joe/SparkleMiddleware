@@ -31,33 +31,7 @@ module.exports = {
     getRabbitMQCredentials: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {
-            if (vcapService.match(/RabbitMQ/i)) {
-                return vcapServices[vcapService][0].credentials;
-            }
-        }
-    },
-
-    getServerAuth: function (jsonData) {
-        var vcapServices = JSON.parse(jsonData);
-        for (var vcapService in vcapServices) {
-            if (vcapService.match(/serverauth/i)) {
-                return vcapServices[vcapService][0].credentials;
-            }
-        }
-    },
-
-    getServerAuth2: function (jsonData) {
-        var vcapServices = JSON.parse(jsonData);
-        for (var vcapService in vcapServices) {
-            if (vcapService.match(/serverauth2/i)) {
-                return vcapServices[vcapService][0].credentials;
-            }
-        }
-    },
-    getServerAuth3: function (jsonData) {
-        var vcapServices = JSON.parse(jsonData);
-        for (var vcapService in vcapServices) {
-            if (vcapService.match(/serverauth3/i)) {
+            if (vcapService.match(/messages-for-rabbitmq/i)) {
                 return vcapServices[vcapService][0].credentials;
             }
         }

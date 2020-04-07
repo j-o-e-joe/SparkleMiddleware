@@ -1,8 +1,15 @@
 const AWS = require('ibm-cos-sdk');
 const fs = require('fs');
 const config = require('./config');
-const cos_configuration = config.getCosCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
-const cos = new AWS.S3(cos_configuration);
+const cos_creds = config.getCosCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
+const cos_config = {
+    endpoint: 's3.us-south.cloud-object-storage.appdomain.cloud',
+    apiKeyId: cos_creds.apikey,
+    ibmAuthEndpoint: 'https://iam.cloud.ibm.com/identity/token',
+    serviceInstanceId: cos_creds.resource_instance_id,
+};
+
+const cos = new AWS.S3(cos_config);
       
 module.exports = {
     addItemToStorage: function(bucketname, timestamp, controlnumber, protocol, filename, filebody) {

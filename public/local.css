@@ -1,3 +1,5 @@
+body { background-color:#F4F4F4; }
+.jumbotron { background-color:#F4F4F4 !important; }
 .tableFixHead { overflow-y: auto; height: 400px; }
 
 

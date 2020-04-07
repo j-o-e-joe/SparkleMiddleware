@@ -30,7 +30,7 @@ passport.use(new WebAppStrategy({
 "clientId": appid.clientId,
 "secret": appid.secret,
 "oAuthServerUrl": appid.oauthServerUrl,
-"redirectUri": "https://gia-autoplot.mybluemix.net/appid/callback"
+"redirectUri": "https://sparkle-pipeline.us-south.cf.appdomain.cloud/appid/callback"
 }));
 passport.use(new APIStrategy({
 "oAuthServerUrl": appid.oauthServerUrl   
