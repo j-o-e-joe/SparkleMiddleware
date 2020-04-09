@@ -175,7 +175,7 @@
                   $.get("/api/getclaritytrainingresults", function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Model Active</th><th>Use Relief</th><th>Training Input</th><th>Test Input</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th>" );  
+                        rows.push("<tr><th>Activate Model</th><th>Model ID</th><th>Model Active</th><th>Use Relief</th><th>Training Input</th><th>Test Input</th><th>Train Test Set</th><th>Confusion Matrix</th><th>Results Table</th><th>Results Zip</th>" );  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td><input type=\"button\" class=\"clarity-grade-model-item\" id=\"" + object.value.trainingtimestamp + "\" value=\"Activate\">"
                                                     + "</td><td>" + object.value.trainingtimestamp 
@@ -183,6 +183,7 @@
                                                     + "</td><td>" + object.value.use_relief
                                                     + "</td><td>" + object.value.trainingfile 
                                                     + "</td><td>" + object.value.testfile 
+                                                    + "</td><td>" + object.value.trainingtestset
                                                     + "</td><td>" + object.value.confusionmatrix 
                                                     + "</td><td>" + object.value.ensembletable 
                                                     + "</td><td>" + object.value.testsplitimages

@@ -31,7 +31,7 @@ module.exports = {
     getRabbitMQCredentials: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {
-            if (vcapService.match(/RabbitMQ/i)) {
+            if (vcapService.match(/messages-for-rabbitmq/i)) {
                 return vcapServices[vcapService][0].credentials;
             }
         }
