@@ -5,8 +5,6 @@ const s3_data = require('./s3_data');
 const cloudant_data = require('./cloudant_data');
 const config = require('./config');
 const fs = require('fs');
-const http = require('http');
-
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
 
@@ -14,7 +12,12 @@ var db = cloudant_data.initDBConnection();
 var router = express.Router();
 
 // iPad APIs
-const APIStrategy = require('ibmcloud-appid').APIStrategy;
+const APIStrategy = require("ibmcloud-appid").APIStrategy;
+var appid = config.getAppIDCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
+passport.use(new APIStrategy({
+    "oAuthServerUrl": appid.oauthServerUrl   
+}));
+
 router.get('/api/getcisgoitems_processed',
 	passport.authenticate(APIStrategy.STRATEGY_NAME, {
 	    session: false

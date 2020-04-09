@@ -22,12 +22,21 @@ module.exports = {
     getAppIDCredentials: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {
-            if (vcapService.match(/AppID/i)) {
+            if (vcapService.match(/appid/i)) {
                 return vcapServices[vcapService][0].credentials;
             }
         }
     },
     
+    getAppIDCutwiseCredentials: function (jsonData) {
+        var vcapServices = JSON.parse(jsonData);
+        for (var vcapService in vcapServices) {
+            if (vcapService.match(/appid/i)) {
+                return vcapServices[vcapService][0].cutwise_credentials;
+            }
+        }
+    },
+
     getRabbitMQCredentials: function (jsonData) {
         var vcapServices = JSON.parse(jsonData);
         for (var vcapService in vcapServices) {

@@ -1,0 +1,41 @@
+openapi: 3.0.0
+info:
+  title: GIA Cutwise Upload API
+  description: "This API is for uplaoding Cutwise data to IBM Cloud Object Storage. \n\n The following APIs are protected by IBM AppID. App ID leverages the OAuth 2.0 client credentials flow to protect communication.In the application authorization flow, the application is granted only an access token. It does not obtain an identity token or a refresh token.\n\n The following shows an example request for obtaining the access token. curl -X POST http://localhost:6002/oauth/v4/39a37f57-a227-4bfe-a044-93b6e6060b61/token -H 'Authorization: Basic base64Encoded{clientId:secret}' -H 'Content-Type:application/x-www-form-urlencoded' -d grant_type=client_credentials"
+  version: 0.1.9
+servers:
+  - url: https://sparkle-pipeline.us-south.cf.appdomain.cloud
+    description: GIA Sparkle Server
+paths:
+  /api/uploadcutwise:
+    post:
+      summary: Upload image files in zip archive
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      security:
+        - oAuth2ClientCredentials: [] 
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Not authenticated
+        '400':
+          description: Invalid Upload
+        '500':
+          description: Server Error
+components: 
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: "oauth2"
+      description: "See https://www.ibm.com/cloud/app-id"
+      flows:
+        clientCredentials:
+          tokenUrl: https://us-south.appid.cloud.ibm.com/oauth/v4/f5306e4e-6fda-4d11-87f3-f9646158260d/token
+

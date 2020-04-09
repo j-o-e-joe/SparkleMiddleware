@@ -2,7 +2,7 @@
 applications:
  - name: sparkle-pipeline
    random-route: true
-   memory: 1GB
+   memory: 2GB
    services:
    - sparkle_pipeline_appid
    - sparkle_pipeline_cloudant
