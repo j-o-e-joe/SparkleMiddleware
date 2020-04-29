@@ -11,6 +11,7 @@
   "author": "",
   "license": "",
   "dependencies": {
+    "@cloudant/cloudant": "^4.2.4",
     "adm-zip": "^0.4.13",
     "amqplib": "^0.5.5",
     "cloudant": "^1.10.0-NOTICE",

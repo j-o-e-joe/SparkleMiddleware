@@ -13,9 +13,8 @@ var router = express.Router();
 
 // iPad APIs
 const APIStrategy = require("ibmcloud-appid").APIStrategy;
-var appid = config.getAppIDCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
 passport.use(new APIStrategy({
-    "oAuthServerUrl": appid.oauthServerUrl   
+    "oAuthServerUrl":  config.getAppIDOAuthServerUrl()  
 }));
 
 router.get('/api/getcisgoitems_processed',
@@ -23,7 +22,7 @@ router.get('/api/getcisgoitems_processed',
 	    session: false
 	}),
 	function(req, res)  {
-        cloudant_data.getGradeViewItems(db, req.query.controlnumber).then((obj)=>{
+        cloudant_data.getPlotViewItems(db, req.query.controlnumber).then((obj)=>{
             res.json(obj);
             res.end(); 
         }).catch((e)=>{
@@ -160,7 +159,7 @@ router.post('/api/uploadplot',
         var plotdevice = req.body.plotdevice;
         var plotusername = req.body.plotusername;
         var sparklegradeprocessed = req.body.sparklegradeprocessed;
-        var sparklemodel = req.body.sparklemodel;
+        var trainingid = req.body.trainingid;
         var filename = req.file.originalname;
         var filebody = req.file.buffer;
     
@@ -175,7 +174,7 @@ router.post('/api/uploadplot',
             plotitem.plotdevice = plotdevice;
             plotitem.plotusername = plotusername;
             plotitem.sparklegradeprocessed = sparklegradeprocessed;
-            plotitem.sparklemodel = sparklemodel;
+            plotitem.trainingid = trainingid;
             plotitem.filepath = plottimestamp + "/" + filename;
             cloudant_data.addItemToCloudantDB(db, plotitem).then(()=>{
                 res.write('New plot success.');
@@ -201,8 +200,26 @@ router.get('/api/getitemcontents',
         var foldername = req.query.foldername;
         var itemname = req.query.itemname;
         var filepath = foldername + '/' + itemname;
+
+        var fileext = filepath.split('.').pop();
+        var contenttype = 'application/octet-stream';
+        if (fileext.includes('png')) {
+            contenttype = 'image/png'
+        } else if (fileext.includes('jpg')) {
+            contenttype = 'image/jpeg'
+        } else if (fileext.includes('jpeg')) {
+            contenttype = 'image/jpeg'
+        } else if (fileext.includes('svg')) {
+            contenttype = 'image/svg+xml'
+        }  else if (fileext.includes('json')) {
+            contenttype = 'text/plain'
+        }  else if (fileext.includes('txt')) {
+            contenttype = 'text/plain'
+        }
+
         s3_data.getItemFromStorage(bucketname, filepath).then((data)=>{
-            res.writeHead(200, {'Content-Type': 'image/jpeg'});
+            res.setHeader('Content-disposition', 'filename=' + filepath);
+            res.writeHead(200, {'Content-Type': contenttype});
             res.write(data.Body, 'binary');
             res.end(null, 'binary');
         }).catch((e)=>{

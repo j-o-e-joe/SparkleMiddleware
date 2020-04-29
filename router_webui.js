@@ -17,27 +17,20 @@ const upload = multer({ storage });
 var db = cloudant_data.initDBConnection();
 var router = express.Router();
 
+let connectionString = config.getRabbitMQConnection();
+let certificateBase64 = config.getRabbitMQCertificateBase64();
+let caCert = Buffer.from(certificateBase64, 'base64');
 
-var rabbit_services = []
-if (process.env.VCAP_SERVICES) {
-    rabbit_services = config.getRabbitMQCredentials(process.env.VCAP_SERVICES);
-} else { 
-    rabbit_services = config.getRabbitMQCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
-}
-
-let rabbitConn = rabbit_services.connection.amqps;
-let caCert = Buffer.from(rabbitConn.certificate.certificate_base64, 'base64');
-let connectionString = rabbitConn.composed[0];
 let open = amqp.connect(connectionString, { ca: [caCert] });
 open
   .then(conn => {
     return conn.createChannel();
   })
   .then(ch => {
-    return ch.assertQueue("sparkle_pipeline", { autoDelete: false, durable: false });
+    return ch.assertQueue("sparkle_fitting_pipeline", { autoDelete: false, durable: false });
   })
   .catch(err => {
-    console.err(err);
+    console.log(err);
 });
 
 open
@@ -48,7 +41,7 @@ open
     return ch.assertQueue("sparkle_training", { autoDelete: false, durable: false });
   })
   .catch(err => {
-    console.err(err);
+    console.log(err);
 });
 
 var sparklepipelinelogs = []
@@ -75,7 +68,7 @@ open.then(conn => {
     });
 })
 .catch(err => {
-    console.err(err);
+    console.log(err);
 });
 
 var sparkletraininglogs = []
@@ -104,7 +97,7 @@ open.then(conn => {
     });
 })
 .catch(err => {
-    console.err(err);
+    console.log(err);
 });
 
 function additemtodatastore(bucketname, fileitem, cisgotimestamp, controlnumber) {
@@ -138,7 +131,7 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
         })
         .then(ch => {
             let message = "{\"controlnumber\":\"" + controlnumber + "\", \"cisgotimestamp\":\"" + cisgotimestamp + "\"}"
-            ch.publish('', 'sparkle_pipeline', Buffer(message));
+            ch.publish('', 'sparkle_fitting_pipeline', Buffer(message));
             resolve(message);
         })
         .catch(err => {
@@ -149,7 +142,7 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
 
 function runinclusiontraining(trainingtimestamp) {
     return new Promise((resolve, reject)=>{
-        open.then(conn => {
+         open.then(conn => {
             return conn.createChannel();
         })
         .then(ch => {
@@ -219,7 +212,8 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
                 asc_item.sparkleprocessed = false;
                 cloudant_data.addItemToCloudantDB(db, asc_item).then(()=>{    
                 }).catch((e)=>{ 
-                    reject(e)
+                    console.log(e)
+                    //reject(e)
                 })
             }).catch((e)=>{
             });
@@ -237,9 +231,8 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
             a_crown_item.sparkleprocessed = false;
             cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
             }).catch((e)=>{ 
-                console.log("failed to add a_crown_item to cloudant")
                 console.log(e)
-                reject(e)
+                //reject(e)
             })
         }, 1000); 
         
@@ -255,9 +248,8 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
             b_high_item.sparkleprocessed = false;
             cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
             }).catch((e)=>{ 
-                console.log("failed to add b_high_item to cloudant")
                 console.log(e)
-                reject(e)
+                //reject(e)
             })
         }, 1000); 
 
@@ -275,14 +267,15 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
                 runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
                 resolve(controlnumber)
             }).catch((e)=>{ 
-                console.log("failed to add b_low_item to cloudant")
                 console.log(e)
-                reject(e)
+                resolve(controlnumber)
+                //reject(e)
             })
         }, 1000); 
         
     }).catch((e)=>{
-        reject(e)
+        //reject(e)
+        console.log(e)
     });
 
     });
@@ -527,11 +520,11 @@ router.post('/api/setitemcontents',
                         }
                     } 
                 }
-            } else if (ext == "asc") {
+            } else if (entryname == controlnumber + ".asc") {
                 var fileitem = new Object();
-                fileitem.controlnumber = components[0];
+                fileitem.controlnumber = controlnumber;
                 fileitem.protocol = "ASC" 
-                fileitem.filename = entryname
+                fileitem.filename = controlnumber + ".asc";
                 fileitem.data = data;
                 filemap.set('asc', fileitem);
             } 
@@ -772,7 +765,7 @@ router.get('/api/getascitems',
             var crows = []
             for (var i = 0; i < rows.length; i++) {
                 var ctrlnumber = rows[i].value.controlnumber
-                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=heliumuploads&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=heliumwireframes&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
                 crows.push(rows[i]);    
             }
             var item = new Object();
@@ -872,8 +865,25 @@ router.get('/api/getobject',
     function(req, res) {
         var bucketname = req.query.bucketname
         var filepath = req.query.filepath;
+        var fileext = filepath.split('.').pop();
+        var contenttype = 'application/octet-stream';
+        if (fileext.includes('png')) {
+            contenttype = 'image/png'
+        } else if (fileext.includes('jpg')) {
+            contenttype = 'image/jpeg'
+        } else if (fileext.includes('jpeg')) {
+            contenttype = 'image/jpeg'
+        } else if (fileext.includes('svg')) {
+            contenttype = 'image/svg+xml'
+        }  else if (fileext.includes('json')) {
+            contenttype = 'text/plain'
+        }  else if (fileext.includes('txt')) {
+            contenttype = 'text/plain'
+        }
+
         s3_data.getItemFromStorage(bucketname, filepath).then((data)=>{
-            res.writeHead(200, {'Content-Type': 'image/jpeg'});
+            res.setHeader('Content-disposition', 'filename=' + filepath);
+            res.writeHead(200, {'Content-Type': contenttype});
             res.write(data.Body, 'binary');
             res.end(null, 'binary');
         }).catch((e)=>{

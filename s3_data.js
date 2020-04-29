@@ -1,12 +1,11 @@
 const AWS = require('ibm-cos-sdk');
 const fs = require('fs');
 const config = require('./config');
-const cos_creds = config.getCosCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
 const cos_config = {
-    endpoint: 's3.us-south.cloud-object-storage.appdomain.cloud',
-    apiKeyId: cos_creds.apikey,
-    ibmAuthEndpoint: 'https://iam.cloud.ibm.com/identity/token',
-    serviceInstanceId: cos_creds.resource_instance_id,
+    endpoint: config.getCosEndpoint(),
+    apiKeyId: config.getCosAPIKeyID(),
+    ibmAuthEndpoint: config.getCosAuthEndpoint(),
+    serviceInstanceId: config.getCosServiceInstanceID(),
 };
 
 const cos = new AWS.S3(cos_config);

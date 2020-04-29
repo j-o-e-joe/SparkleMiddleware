@@ -14,22 +14,21 @@ const WebAppStrategy = require('ibmcloud-appid').WebAppStrategy;
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(session(config.getSession(fs.readFileSync("vcap-local.json", "utf-8"))));
+app.use(session( {"secret": config.getSessionSecret(),
+                    "resave": true,
+                    "saveUninitialized": true}));
 
 app.use(passport.initialize());
 app.use(passport.session());
 passport.serializeUser((user, cb) => cb(null, user));
 passport.deserializeUser((user, cb) => cb(null, user));
 
-
-var appid = config.getAppIDCredentials(fs.readFileSync("vcap-local.json", "utf-8"));
-
 passport.use(new WebAppStrategy({
-"tenantId": appid.tenantId,
-"clientId": appid.clientId,
-"secret": appid.secret,
-"oAuthServerUrl": appid.oauthServerUrl,
-"redirectUri": "https://sparkle-pipeline.us-south.cf.appdomain.cloud/appid/callback"
+"tenantId": config.getAppIDTenantID(),
+"clientId": config.getAppIDClientID(),
+"secret": config.getAppIDSecret(),
+"oAuthServerUrl": config.getAppIDOAuthServerUrl(),
+"redirectUri": "https://sparklepipelinecluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud/appid/callback"
 }));
 
 

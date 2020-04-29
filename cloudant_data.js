@@ -1,17 +1,15 @@
 const config = require('./config');
 const fs = require('fs');
+const Cloudant = require('@cloudant/cloudant');
 const dbCredentials = {
     dbName: 'sparkle_db'
 }
 
 module.exports = {
     initDBConnection: function() {
-        if (process.env.VCAP_SERVICES) {
-            dbCredentials.url = config.getDBCredentialsUrl(process.env.VCAP_SERVICES);
-        } else { 
-        dbCredentials.url = config.getDBCredentialsUrl(fs.readFileSync("vcap-local.json", "utf-8"));
-        }
-        var cloudant = require('cloudant')(dbCredentials.url);
+        dbCredentials.url = config.getDBCredentialsUrl();
+        console.log(dbCredentials)
+        var cloudant = Cloudant(dbCredentials.url);
         cloudant.db.create(dbCredentials.dbName, function(err, res) {
             if (err) {
                 console.log("Error here: " + err);
@@ -357,6 +355,24 @@ module.exports = {
                         }
                     }
                     resolve(map);
+                }
+            });  
+        });
+    },
+    getPlotViewItems: function(db, controlnumber) {
+        return new Promise((resolve, reject)=>{
+            db.view('all', 'plotitems', 
+            {'key': controlnumber},
+            function (err, data) {
+                if (err) {
+                    reject(err)
+                } else {
+                    var obj = {}
+                    if (data.rows.length > 0) {
+                        var value = data.rows[data.rows.length - 1].value;
+                        obj = {"controlnumber": value.controlnumber,  "cisgotimestamp": value.cisgotimestamp, "sparkletabletimestamp": value.sparkletabletimestamp, "plottimestamp": value.plottimestamp, "trainingid": value.trainingid};
+                    }
+                    resolve(obj);
                 }
             });  
         });

@@ -135,7 +135,7 @@
                         <hr>
                         <div class="row">
                             <div class="col-md-5">
-                                <h4 class="display-5">ASC Files</h4>
+                                <h4 class="display-5">SVG Wireframes</h4>
                                 <table class='table' id="ascitems"></table>
                             </div>
                         </div> 
@@ -222,14 +222,13 @@
                   $.get("/api/getascitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
+                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>Training Id</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"delete-asc-item\" id=\"" + object.value._id + "&bucketname=heliumuploads&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-asc-item\" id=\"" + object.value._id + "&bucketname=heliumwireframes&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
-                                                    + "</td><td>" + object.value.cisgousername 
-                                                    + "</td><td>" + object.value.cisgodevice 
-                                                    + "</td><td>" + object.value.protocol 
+                                                    + "</td><td>" + object.value.sparkletabletimestamp 
+                                                    + "</td><td>" + object.value.trainingid
                                                     + "</td><td>" + object.value.fileanchor
 								                    + "</td></tr>");
                         });
@@ -252,7 +251,7 @@
                                                     + "</td><td>" + object.value.plottimestamp
                                                     + "</td><td>" + object.value.plotdevice
                                                     + "</td><td>" + object.value.sparklegradeprocessed
-                                                    + "</td><td>" + object.value.sparklemodel
+                                                    + "</td><td>" + object.value.trainingid
                                                     + "</td><td>" + object.value.fileanchor
 								                    + "</td></tr>");
                         });
@@ -297,18 +296,45 @@
                   $.get("/api/getreportitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th>Username</th><th>Time Stamp</th><th>Control Number</th><th>Color</th><th>Polish</th><th>Cut</th><th>Symmetry</th><th>Fluorescence</th><th>Clarity</th><th>Comments</th>");  
+                        rows.push("<tr><th>Username</th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>Plot Timestamp</th><th>Grade Timestamp</th><th>Clarity Override</th><th>Clarity Override Reason</th><th>Clarity Characteristics</th>");  
                         $.each(obj.rows, function(index, object) {
+
+                        var characteristics = []
+                        if (object.value.clarity_characteristics.laser_manufacturing_remnant == true) { characteristics.push("laser manufacturing remnant")} 
+                        if (object.value.clarity_characteristics.internal_graining == true) { characteristics.push(" internal graining")} 
+                        if (object.value.clarity_characteristics.pinpoint == true){ characteristics.push(" pinpoint")} 
+                        if (object.value.clarity_characteristics.cavity == true){ characteristics.push(" cavity")} 
+                        if (object.value.clarity_characteristics.extra_facet == true){ characteristics.push(" extra facet")} 
+                        if (object.value.clarity_characteristics.cloud == true){ characteristics.push(" cloud")} 
+                        if (object.value.clarity_characteristics.needle == true){ characteristics.push(" needle")} 
+                        if (object.value.clarity_characteristics.indented_inscription == true){ characteristics.push(" indented inscription")} 
+                        if (object.value.clarity_characteristics.nano_patterning_features == true){ characteristics.push(" nano patterning features")} 
+                        if (object.value.clarity_characteristics.chip == true){ characteristics.push(" chip")} 
+                        if (object.value.clarity_characteristics.surface_graining == true){ characteristics.push(" surface graining")} 
+                        if (object.value.clarity_characteristics.knot == true){ characteristics.push(" knot")} 
+                        if (object.value.clarity_characteristics.natural == true){ characteristics.push(" natural")} 
+                        if (object.value.clarity_characteristics.crystal == true){ characteristics.push(" crystal")} 
+                        if (object.value.clarity_characteristics.internal_laser_drilling == true){ characteristics.push(" internal laser drilling")} 
+                        if (object.value.clarity_characteristics.laser_drill_hole == true){ characteristics.push(" laser drill hole")} 
+                        if (object.value.clarity_characteristics.mounting_feature == true){ characteristics.push(" mounting feature")} 
+                        if (object.value.clarity_characteristics.bruise == true){ characteristics.push(" bruise")} 
+                        if (object.value.clarity_characteristics.indented_natural == true){ characteristics.push(" indented natural")} 
+                        if (object.value.clarity_characteristics.internal_inscription == true){ characteristics.push(" internal inscription")} 
+                        if (object.value.clarity_characteristics.feather == true){ characteristics.push(" feather")} 
+                        if (object.value.clarity_characteristics.fashioning_details == true){ characteristics.push(" fashioning details")} 
+                        if (object.value.clarity_characteristics.patch_of_color == true){ characteristics.push(" patch of color")} 
+                        if (object.value.clarity_characteristics.minor_details_of_polish == true){ characteristics.push(" minor details of polish")} 
+                        if (object.value.clarity_characteristics.etch_hannel == true){ characteristics.push(" etch hannel")} 
+
                           rows.push("<tr><td>" + object.value.user 
-                                        + "</td><td>" + object.value._id
                                         + "</td><td>" + object.value.controlnumber
-                                        + "</td><td>" + object.value.color
-                                        + "</td><td>" + object.value.polish
-                                        + "</td><td>" + object.value.cut
-                                        + "</td><td>" + object.value.symmetry
-                                        + "</td><td>" + object.value.fluorescence
-                                        + "</td><td>" + object.value.clarity
-                                        + "</td><td>" + object.value.comments
+                                        + "</td><td>" + object.value.cisgotimestamp
+                                        + "</td><td>" + object.value.sparkletabletimestamp
+                                        + "</td><td>" + object.value.plottimestamp
+                                        + "</td><td>" + object.value.gradetimestap
+                                        + "</td><td>" + object.value.clarity_override
+                                        + "</td><td>" + object.value.override_reason
+                                        + "</td><td>" + characteristics.join(', ')
                                         + "</td></tr>");
                         });
                         $("#reports").append(rows.join(""));

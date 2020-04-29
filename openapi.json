@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "GIA Cutwise Upload API",
-    "description": "This API is for uplaoding Cutwise data to IBM Cloud Object Storage. \n\n The following APIs are protected by IBM AppID. App ID leverages the OAuth 2.0 client credentials flow to protect communication.In the application authorization flow, the application is granted only an access token. It does not obtain an identity token or a refresh token.\n\n The following shows an example request for obtaining the access token. curl -X POST http://localhost:6002/oauth/v4/39a37f57-a227-4bfe-a044-93b6e6060b61/token -H 'Authorization: Basic base64Encoded{clientId:secret}' -H 'Content-Type:application/x-www-form-urlencoded' -d grant_type=client_credentials",
+    "description": "This API is for uplaoding Cutwise data to IBM Cloud Object Storage. \n\n The following APIs are protected by IBM AppID. App ID leverages the OAuth 2.0 client credentials flow to protect communication.In the application authorization flow, the application is granted only an access token. It does not obtain an identity token or a refresh token.<br><br> The following shows an example request for obtaining the access token.<br><br> curl -X POST http://localhost:6002/oauth/v4/39a37f57-a227-4bfe-a044-93b6e6060b61/token -H 'Authorization: Basic base64Encoded{clientId:secret}' -H 'Content-Type:application/x-www-form-urlencoded' -d grant_type=client_credentials",
     "version": "0.1.9"
   },
   "servers": [
@@ -37,10 +37,10 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "Success: Zip package uploaded successfully"
           },
           "400": {
-            "description": "Invalid Upload"
+            "description": "Missing ASET File<br> Missing Top_White File<br> Missing Top_White_Wireframe<br> Missing Top_White_Wireframe File<br> Missing Wireframe File<br> Missing DF-Low File<br> Missing DF-High File<br> Missing DF File<br> Missing ASC File"
           },
           "401": {
             "description": "Not authenticated"
