@@ -12,7 +12,7 @@ const cos = new AWS.S3(cos_config);
       
 module.exports = {
     addItemToStorage: function(bucketname, timestamp, controlnumber, protocol, filename, filebody) {
-        return new Promise((resolve, reject)=>{
+         return new Promise((resolve, reject)=>{
             cos.putObject({
                 Bucket: bucketname, 
                 Key: controlnumber + "/" + timestamp + "/" + protocol + "/" + filename, 

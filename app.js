@@ -28,7 +28,7 @@ passport.use(new WebAppStrategy({
 "clientId": config.getAppIDClientID(),
 "secret": config.getAppIDSecret(),
 "oAuthServerUrl": config.getAppIDOAuthServerUrl(),
-"redirectUri": "https://sparklepipelinecluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud/appid/callback"
+"redirectUri": "https://sparkleuatcluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud/appid/callback"
 }));
 
 

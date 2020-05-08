@@ -5,10 +5,10 @@ metadata:
 spec:
  tls:
  - hosts:
-   - sparklepipelinecluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud
-   secretName: sparklepipelinecluster-0de26d204cce5ce3782ab0318a20cdb8-0000
+   - sparkleuatcluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud 
+   secretName: sparkleuatcluster-0de26d204cce5ce3782ab0318a20cdb8-0000
  rules:
- - host: sparklepipelinecluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud
+ - host: sparkleuatcluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud 
    http:
      paths:
      - path: /

@@ -29,28 +29,28 @@ spec:
       spec:
         containers:
         - name: sparklemiddleware
-          image: us.icr.io/sparkle-pipeline-development/sparklemiddleware:latest
+          image: us.icr.io/sparkle-uat/sparklemiddleware:latest
           ports:
             - containerPort: 3000
           env:
             - name: CISGOIMAGES
-              value: "cisgoimages"
+              value: "cisgoimages-uat"
             - name: CUTWISEUPLOADS
-              value: "cutwiseuploads"
+              value: "cutwiseuploads-uat"
             - name: HELIUMUPLOADS
-              value: "heliumuploads"
+              value: "heliumuploads-uat"
             - name: HELIUMWIREFRAMES
-              value: "heliumwireframes"
+              value: "heliumwireframes-uat"
             - name: SPARKLEPLOTS
-              value: "sparkleplots"
+              value: "sparkleplots-uat"
             - name: SPARKLETABLEDATA
-              value: "sparkletabledata"
+              value: "sparkletabledata-uat"
             - name: SPARKLETRAININGCLARITY
-              value: "sparkletrainingclarity"
+              value: "sparkletrainingclarity-uat"
             - name: SPARKLETRAININGINCLUSIONS
-              value: "sparkletraininginclusions"
+              value: "sparkletraininginclusions-uat"
             - name: SPARKLETRAININGWIREFRAME
-              value: "sparkletrainingwireframe"
+              value: "sparkletrainingwireframe-uat"
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -132,4 +132,4 @@ spec:
                   name: deployment-secret
                   key: RABBITMQ_CERTIFICATE_BASE64
         nodeSelector:
-          node: 10.241.30.89
+          node: 10.220.196.207
