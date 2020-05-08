@@ -8,6 +8,9 @@ const fs = require('fs');
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
 
+// S3 Buckets 
+const SPARKLETRAININGCLARITY = process.env.SPARKLETRAININGCLARITY
+
 var db = cloudant_data.initDBConnection();
 var router = express.Router();
 
@@ -89,7 +92,7 @@ router.get('/api/getclaritymodel',
         console.log(modelname)
         var filepath = trainingid + '/' + modelname;
         console.log(filepath)
-        s3_data.getItemFromStorage('sparkletrainingclarity', filepath).then((data)=>{
+        s3_data.getItemFromStorage(SPARKLETRAININGCLARITY, filepath).then((data)=>{
             res.setHeader('Content-disposition', 'attachment; filename=' + filepath);
             res.writeHead(200, {'Content-Type': 'application/octet-stream'});
             res.write(data.Body, 'binary');

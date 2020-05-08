@@ -4,11 +4,9 @@ const Cloudant = require('@cloudant/cloudant');
 const dbCredentials = {
     dbName: 'sparkle_db'
 }
-
 module.exports = {
     initDBConnection: function() {
         dbCredentials.url = config.getDBCredentialsUrl();
-        console.log(dbCredentials)
         var cloudant = Cloudant(dbCredentials.url);
         cloudant.db.create(dbCredentials.dbName, function(err, res) {
             if (err) {
@@ -20,13 +18,13 @@ module.exports = {
                      "_id": "_design/all",
                      "views": {
                       "cisgoitems_processed": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.cisgotimestamp && doc.sparkleprocessed == true && doc.bucketname === \"cisgoimages\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.cisgotimestamp && doc.sparkleprocessed == true && doc.bucketname === \""  + CISGOIMAGES + "\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
                       },
                       "sparkletableitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkletabledata\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLETABLEDATA + "\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "plotitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLEPLOTS + "\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "gradeitems": {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.continuous_grade) {\n    emit(doc.controlnumber, doc);\n  }\n}"
@@ -35,54 +33,48 @@ module.exports = {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.sparkleprocessed == false) {\n    emit([doc.controlnumber, doc.cisgotimestamp, doc._id], doc);\n  }\n}"
                       },
                       "cisgoitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cisgoimages\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + CISGOIMAGES + "\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "reportitems": {
                        "map": "function (doc) {\n  if (doc.controlnumber && doc.report) {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "sparkletableitems_batch": {
-                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletabledata\" && doc.sparklemodel === \"2019-11-21T13:50:03.221926\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.bucketname === \"" + SPARKLETABLEDATA + "\" && doc.sparklemodel === \"2019-11-21T13:50:03.221926\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "plotitems_batch": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\" && doc.plotusername == 'gia') {\n    emit(doc.controlnumber, doc);\n  }\n}"
-                      },
-                      "cisgoitems_batch": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.sparkleprocessed == false && doc.cisgousername == 'gia') {\n      emit([doc.controlnumber, doc.cisgotimestamp, doc._id], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLEPLOTS + "\" && doc.plotusername == 'gia') {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       },
                       "sparkletrainingitems": {
-                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletrainingclarity\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.bucketname === \"" + SPARKLETRAININGCLARITY + "\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
                       },
                       "plot_timestamp_items": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    emit(doc.plottimestamp, doc.controlnumber);\n  }\n}"
-                      },
-                      "sparkletrainingjobs": {
-                       "map": "function (doc) {\n  if (doc.trainingid) {\n    emit(doc.trainingid, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLEPLOTS + "\") {\n    emit(doc.plottimestamp, doc.controlnumber);\n  }\n}"
                       },
                       "sparkleinclusiontrainingitems": {
-                       "map": "function (doc) {\n  if (doc.bucketname === \"sparkletraininginclusions\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.bucketname === \"" + SPARKLETRAININGINCLUSIONS + "\") {\n    emit(doc.trainingtimestamp, doc);\n  }\n}"
                       },
                       "cisgoitems_asc": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumuploads\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + HELIUMUPLOADS + "\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
                       },
                       "cisgoitems_asc_aligned": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumwireframes\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + HELIUMWIREFRAMES + "\") {\n    emit([doc.controlnumber, doc.cisgotimestamp], doc);\n  }\n}"
                       },
                       "cutwiseitems": {
-                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cutwisedata\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                       "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + CUTWISEUPLOADS + "\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
                       }
                      },
                      "indexes": {
                       "cisgo_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"cisgoimages\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + CISGOIMAGES + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "sparkle_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkletabledata\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLETABLEDATA + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "plot_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLEPLOTS + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "grade_by_controlnumber": {
                        "analyzer": "standard",
@@ -94,31 +86,31 @@ module.exports = {
                       },
                       "training_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.trainingtimestamp && doc.bucketname === \"sparkletraining\") {\n    index(\"trainingtimestamp\", doc.trainingtimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.trainingtimestamp && doc.bucketname === \"" + SPARKLETRAININGINCLUSIONS + "\") {\n    index(\"trainingtimestamp\", doc.trainingtimestamp, {store:true});\n  }\n}"
                       },
                       "inclusion_training_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.trainingtimestamp && doc.bucketname === \"sparkletraininginclusions\") {\n    index(\"trainingtimestamp\", doc.trainingtimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.trainingtimestamp && doc.bucketname === \"" + SPARKLETRAININGINCLUSIONS + "\") {\n    index(\"trainingtimestamp\", doc.trainingtimestamp, {store:true});\n  }\n}"
                       },
                       "asc_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumuploads\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + HELIUMUPLOADS + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "plot_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    index(\"plottimestamp\", doc.plottimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLEPLOTS + "\") {\n    index(\"plottimestamp\", doc.plottimestamp, {store:true});\n  }\n}"
                       },
                       "plot_by_username": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"sparkleplots\") {\n    index(\"plotusername\", doc.plotusername, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname === \"" + SPARKLEPLOTS + "\") {\n    index(\"plotusername\", doc.plotusername, {store:true});\n  }\n}"
                       },
                       "asc_aligned_by_controlnumber": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"heliumwireframes\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + HELIUMWIREFRAMES + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                       },
                       "cisgo_by_timestamp": {
                        "analyzer": "standard",
-                       "index": "function (doc) {\n  if (doc.cisgotimestamp && doc.bucketname == \"cisgoimages\") {\n    index(\"cisgotimestamp\", doc.cisgotimestamp, {store:true});\n  }\n}"
+                       "index": "function (doc) {\n  if (doc.cisgotimestamp && doc.bucketname == \"" + CISGOIMAGES + "\") {\n    index(\"cisgotimestamp\", doc.cisgotimestamp, {store:true});\n  }\n}"
                       }
                      }
                 }

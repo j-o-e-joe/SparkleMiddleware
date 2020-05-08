@@ -1,15 +1,12 @@
 <!doctype html>
 <html lang="en"><head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="viewport" content="width=user-scalable, initial-scale=1, shrink-to-fit=no">
         <meta name="description" content="">
         <meta name="author" content="">
-        <link rel="icon" href="/docs/4.0/assets/img/favicons/favicon.ico">
-    
+      
         <title>Auto Plot and Clarity Grade</title>
-    
-        <link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/jumbotron/">
-    
+
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet" type="text/css" href="local.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -186,7 +183,7 @@
                         var rows = [];
                         rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Cisgo Username</th><th>Cisgo Device</th><th>Protocol</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"delete-cisgo-item\" id=\"" + object.value._id + "&bucketname=cisgoimages&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-cisgo-item\" id=\"" + object.value._id + "&bucketname=" + object.value.bucketname + "&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.cisgousername 
@@ -206,7 +203,7 @@
                         var rows = [];
                         rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"delete-sparkle-table-item\" id=\"" + object.value._id + "&bucketname=sparkletabledata&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-sparkle-table-item\" id=\"" + object.value._id + "&bucketname=" + object.value.bucketname + "&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.sparkletabletimestamp 
@@ -224,7 +221,7 @@
                         var rows = [];
                         rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>Training Id</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"delete-asc-item\" id=\"" + object.value._id + "&bucketname=heliumwireframes&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-asc-item\" id=\"" + object.value._id + "&bucketname=" + object.value.bucketname + "&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.sparkletabletimestamp 
@@ -243,7 +240,7 @@
                         var rows = [];
                         rows.push("<tr><th></th><th>Username</th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Table Timestamp</th><th>Plot Timestamp</th><th>Device</th><th>Grade Processed</th><th>Training Id</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"delete-plot-item\" id=\"" + object.value._id + "&bucketname=sparkleplots&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                            rows.push( "<tr><td><input type=\"button\" class=\"delete-plot-item\" id=\"" + object.value._id + "&bucketname=" + object.value.bucketname + "&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.plotusername
                                                     + "</td><td>" + object.value.controlnumber
                                                     + "</td><td>" + object.value.cisgotimestamp 

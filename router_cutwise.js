@@ -10,6 +10,9 @@ const upload = multer({ storage });
 const config = require('./config');
 const fs = require('fs');
 
+// S3 Buckets 
+const CUTWISEUPLOADS = process.env.CUTWISEUPLOADS
+
 var db = cloudant_data.initDBConnection();
 var router = express.Router();
 
@@ -52,7 +55,7 @@ router.post('/api/uploadcutwise',
             
                         if (filetype == "ASET.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -60,7 +63,7 @@ router.post('/api/uploadcutwise',
                             filemap.set('ASET', cutwise_item);
                         } else if (filetype == "Top_White.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -68,7 +71,7 @@ router.post('/api/uploadcutwise',
                             filemap.set('Top_White', cutwise_item);
                         } else if (filetype == "Top_White_Wireframe.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -76,7 +79,7 @@ router.post('/api/uploadcutwise',
                             filemap.set('Top_White_Wireframe', cutwise_item);
                         } else if (filetype == "Wireframe.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -84,7 +87,7 @@ router.post('/api/uploadcutwise',
                             filemap.set('Wireframe', cutwise_item);
                         } else if (filetype == "DF-Low.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -92,7 +95,7 @@ router.post('/api/uploadcutwise',
                             filemap.set('DF-Low', cutwise_item);
                         } else if (filetype == "DF-High.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -100,7 +103,7 @@ router.post('/api/uploadcutwise',
                             filemap.set('DF-High', cutwise_item);
                         } else if (filetype == "DF.jpg") {
                             var cutwise_item = new Object();
-                            cutwise_item.bucketname = "cutwiseuploads";
+                            cutwise_item.bucketname = CUTWISEUPLOADS;
                             cutwise_item.controlnumber = control
                             cutwise_item.timestamp = timestamp
                             cutwise_item.filepath = entryname;
@@ -113,7 +116,7 @@ router.post('/api/uploadcutwise',
                     if (components.length > 1) {
                         var control = components[0]
                         var cutwise_item = new Object();
-                        cutwise_item.bucketname = "cutwiseuploads";
+                        cutwise_item.bucketname = CUTWISEUPLOADS;
                         cutwise_item.controlnumber = control
                         cutwise_item.timestamp = timestamp
                         cutwise_item.filepath = entryname;
@@ -177,21 +180,21 @@ router.post('/api/uploadcutwise',
 
     var promises = []
     promises.push(cloudant_data.addItemToCloudantDB(db, aset))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", aset.controlnumber + "/" + aset.timestamp + "/" + aset.filepath,  filedata.get('ASET')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, aset.controlnumber + "/" + aset.timestamp + "/" + aset.filepath,  filedata.get('ASET')))
     promises.push(cloudant_data.addItemToCloudantDB(db, top_white))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", top_white.controlnumber + "/" + top_white.timestamp + "/" + top_white.filepath, filedata.get('Top_White')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, top_white.controlnumber + "/" + top_white.timestamp + "/" + top_white.filepath, filedata.get('Top_White')))
     promises.push(cloudant_data.addItemToCloudantDB(db, top_white_wireframe))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", top_white_wireframe.controlnumber + "/" + top_white_wireframe.timestamp + "/" + top_white_wireframe.filepath, filedata.get('Top_White_Wireframe')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, top_white_wireframe.controlnumber + "/" + top_white_wireframe.timestamp + "/" + top_white_wireframe.filepath, filedata.get('Top_White_Wireframe')))
     promises.push(cloudant_data.addItemToCloudantDB(db, wireframe))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", wireframe.controlnumber + "/" + wireframe.timestamp + "/" + wireframe.filepath, filedata.get('Wireframe')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, wireframe.controlnumber + "/" + wireframe.timestamp + "/" + wireframe.filepath, filedata.get('Wireframe')))
     promises.push(cloudant_data.addItemToCloudantDB(db, df_low))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", df_low.controlnumber + "/" + df_low.timestamp + "/" + df_low.filepath, filedata.get('DF-Low')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, df_low.controlnumber + "/" + df_low.timestamp + "/" + df_low.filepath, filedata.get('DF-Low')))
     promises.push(cloudant_data.addItemToCloudantDB(db, df_high))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", df_high.controlnumber + "/" + df_high.timestamp + "/" + df_high.filepath, filedata.get('DF-High')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, df_high.controlnumber + "/" + df_high.timestamp + "/" + df_high.filepath, filedata.get('DF-High')))
     promises.push(cloudant_data.addItemToCloudantDB(db, df))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", df.controlnumber + "/" + df.timestamp + "/" + df.filepath, filedata.get('DF')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, df.controlnumber + "/" + df.timestamp + "/" + df.filepath, filedata.get('DF')))
     promises.push(cloudant_data.addItemToCloudantDB(db, asc))
-    promises.push(s3_data.addCutwiseItemToStorage("cutwiseuploads", asc.controlnumber + "/" + asc.timestamp + "/" + asc.filepath, filedata.get('ASC')))
+    promises.push(s3_data.addCutwiseItemToStorage(CUTWISEUPLOADS, asc.controlnumber + "/" + asc.timestamp + "/" + asc.filepath, filedata.get('ASC')))
   
     Promise.all(promises)    
     .then(() => { 

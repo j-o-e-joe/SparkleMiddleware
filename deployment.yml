@@ -33,6 +33,24 @@ spec:
           ports:
             - containerPort: 3000
           env:
+            - name: CISGOIMAGES
+              value: "cisgoimages"
+            - name: CUTWISEUPLOADS
+              value: "cutwiseuploads"
+            - name: HELIUMUPLOADS
+              value: "heliumuploads"
+            - name: HELIUMWIREFRAMES
+              value: "heliumwireframes"
+            - name: SPARKLEPLOTS
+              value: "sparkleplots"
+            - name: SPARKLETABLEDATA
+              value: "sparkletabledata"
+            - name: SPARKLETRAININGCLARITY
+              value: "sparkletrainingclarity"
+            - name: SPARKLETRAININGINCLUSIONS
+              value: "sparkletraininginclusions"
+            - name: SPARKLETRAININGWIREFRAME
+              value: "sparkletrainingwireframe"
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:

@@ -13,6 +13,13 @@ const amqp = require("amqplib");
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
+const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
+
+// S3 Buckets 
+const CISGOIMAGES = process.env.CISGOIMAGES
+const HELIUMUPLOADS = process.env.HELIUMUPLOADS
+const SPARKLETRAININGCLARITY = process.env.SPARKLETRAININGCLARITY
+const SPARKLETRAININGINCLUSIONS = process.env.SPARKLETRAININGINCLUSIONS
 
 var db = cloudant_data.initDBConnection();
 var router = express.Router();
@@ -179,30 +186,31 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         var b_crown_high = filemap.get('b_crown_high');
         var b_crown_low = filemap.get('b_crown_low');
       
-        additemtodatastore("cisgoimages", a_crown_wireframe, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+        additemtodatastore(CISGOIMAGES, a_crown_wireframe, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
             console.log("failed to add item to data store")
             console.log(e)
             reject(e)
             return
         });
-        additemtodatastore("cisgoimages", b_crown_high, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+        additemtodatastore(CISGOIMAGES, b_crown_high, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
             console.log("failed to add item to data store")
             console.log(e)
             reject(e)
             return
         });
-        additemtodatastore("cisgoimages", b_crown_low, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
+        additemtodatastore(CISGOIMAGES, b_crown_low, cisgotimestamp, controlnumber).then(()=>{}).catch((e)=>{
             console.log("failed to add item to data store")
             console.log(e)
             reject(e)
             return
         });
 
+        await sleep(1000);
         if (filemap.has('asc')) {
             var asc = filemap.get('asc');
-            additemtodatastore("heliumuploads", asc, cisgotimestamp, controlnumber).then(()=>{
+            additemtodatastore(HELIUMUPLOADS, asc, cisgotimestamp, controlnumber).then(()=>{
                 var asc_item = new Object();
-                asc_item.bucketname = "heliumuploads";
+                asc_item.bucketname = HELIUMUPLOADS;
                 asc_item.cisgotimestamp = cisgotimestamp;
                 asc_item.cisgousername = cisgouser;
                 asc_item.cisgodevice = cisgodevice;
@@ -216,62 +224,60 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
                     //reject(e)
                 })
             }).catch((e)=>{
+                console.log(e)
             });
         }
       
-        setTimeout(function(){ 
-            var a_crown_item = new Object();
-            a_crown_item.bucketname = "cisgoimages";
-            a_crown_item.cisgotimestamp = cisgotimestamp;
-            a_crown_item.cisgousername = cisgouser;
-            a_crown_item.cisgodevice = cisgodevice;
-            a_crown_item.controlnumber = controlnumber;
-            a_crown_item.protocol = a_crown_wireframe.protocol;
-            a_crown_item.filepath = cisgotimestamp + "/" + a_crown_wireframe.protocol + "/" + a_crown_wireframe.filename;
-            a_crown_item.sparkleprocessed = false;
-            cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
-            }).catch((e)=>{ 
-                console.log(e)
-                //reject(e)
-            })
-        }, 1000); 
+        await sleep(1000);
+        var a_crown_item = new Object();
+        a_crown_item.bucketname = CISGOIMAGES;
+        a_crown_item.cisgotimestamp = cisgotimestamp;
+        a_crown_item.cisgousername = cisgouser;
+        a_crown_item.cisgodevice = cisgodevice;
+        a_crown_item.controlnumber = controlnumber;
+        a_crown_item.protocol = a_crown_wireframe.protocol;
+        a_crown_item.filepath = cisgotimestamp + "/" + a_crown_wireframe.protocol + "/" + a_crown_wireframe.filename;
+        a_crown_item.sparkleprocessed = false;
+        cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
+        }).catch((e)=>{ 
+            console.log(e)
+            //reject(e)
+        })
         
-        setTimeout(function(){ 
-            var b_high_item = new Object();
-            b_high_item.bucketname = "cisgoimages";
-            b_high_item.cisgotimestamp = cisgotimestamp;
-            b_high_item.cisgousername = cisgouser;
-            b_high_item.cisgodevice = cisgodevice;
-            b_high_item.controlnumber = controlnumber;
-            b_high_item.protocol = b_crown_high.protocol;
-            b_high_item.filepath = cisgotimestamp + "/" + b_crown_high.protocol + "/" + b_crown_high.filename;
-            b_high_item.sparkleprocessed = false;
-            cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
-            }).catch((e)=>{ 
-                console.log(e)
-                //reject(e)
-            })
-        }, 1000); 
-
-        setTimeout(function(){ 
-            var b_low_item = new Object();
-            b_low_item.bucketname = "cisgoimages";
-            b_low_item.cisgotimestamp = cisgotimestamp;
-            b_low_item.cisgousername = cisgouser;
-            b_low_item.cisgodevice = cisgodevice;
-            b_low_item.controlnumber = controlnumber;
-            b_low_item.protocol = b_crown_low.protocol;
-            b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
-            b_low_item.sparkleprocessed = false;
-            cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
-                runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
-                resolve(controlnumber)
-            }).catch((e)=>{ 
-                console.log(e)
-                resolve(controlnumber)
-                //reject(e)
-            })
-        }, 1000); 
+        await sleep(1000);
+        var b_high_item = new Object();
+        b_high_item.bucketname = CISGOIMAGES;
+        b_high_item.cisgotimestamp = cisgotimestamp;
+        b_high_item.cisgousername = cisgouser;
+        b_high_item.cisgodevice = cisgodevice;
+        b_high_item.controlnumber = controlnumber;
+        b_high_item.protocol = b_crown_high.protocol;
+        b_high_item.filepath = cisgotimestamp + "/" + b_crown_high.protocol + "/" + b_crown_high.filename;
+        b_high_item.sparkleprocessed = false;
+        cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
+        }).catch((e)=>{ 
+            console.log(e)
+            //reject(e)
+        })
+        
+        await sleep(1000);
+        var b_low_item = new Object();
+        b_low_item.bucketname = CISGOIMAGES;
+        b_low_item.cisgotimestamp = cisgotimestamp;
+        b_low_item.cisgousername = cisgouser;
+        b_low_item.cisgodevice = cisgodevice;
+        b_low_item.controlnumber = controlnumber;
+        b_low_item.protocol = b_crown_low.protocol;
+        b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
+        b_low_item.sparkleprocessed = false;
+        cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
+            runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
+            resolve(controlnumber)
+        }).catch((e)=>{ 
+            console.log(e)
+            resolve(controlnumber)
+            //reject(e)
+        })
         
     }).catch((e)=>{
         //reject(e)
@@ -310,7 +316,7 @@ router.post('/api/runclaritytraining',
             return
         }
 
-        var bucketname = "sparkletrainingclarity"
+        var bucketname = SPARKLETRAININGCLARITY
         var testfile = undefined
         var trainingfile = undefined
         var trainingtimestamp = new Date(new Date().toUTCString()).toISOString();
@@ -375,7 +381,7 @@ router.post('/api/runinclusiontraining',
             return
         }
 
-        var bucketname = "sparkletraininginclusions"
+        var bucketname = SPARKLETRAININGINCLUSIONS
         var testfile = undefined
         var trainingfile = undefined
         var trainingtimestamp = new Date(new Date().toUTCString()).toISOString();
@@ -604,8 +610,8 @@ router.get('/api/getclaritytraininguploads',
         cloudant_data.getTrainingItems(db).then((rows) =>{
             var trows = []
             for (var i = 0; i < rows.length; i++) {
-                rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkletrainingclarity&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
-                rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkletrainingclarity&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
+                rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGCLARITY + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGCLARITY + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
                 if (rows[i].value.confusionmatrix != undefined) {
                     rows[i].value.completed = 'Yes'
                 } else {
@@ -633,11 +639,11 @@ router.get('/api/getclaritytrainingresults',
             var trows = []
             for (var i = 0; i < rows.length; i++) {
                 if (rows[i].value.confusionmatrix != undefined) {
-                    rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkletrainingclarity&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
-                    rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkletrainingclarity&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"
-                    rows[i].value.ensembletable = "<a href='/api/gettrainingfile?bucketname=sparkletrainingclarity&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.ensembletable + "'>" + rows[i].value.ensembletable + "</a>"
-                    rows[i].value.testsplitimages = "<a href='/api/gettrainingfile?bucketname=sparkletrainingclarity&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testsplitimages + "'>" + rows[i].value.testsplitimages + "</a>"
-                    rows[i].value.confusionmatrix = "<a href='/api/getobject?bucketname=sparkletrainingclarity&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.confusionmatrix + "'>" + rows[i].value.confusionmatrix + "</a>"
+                    rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGCLARITY + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                    rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGCLARITY + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"
+                    rows[i].value.ensembletable = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGCLARITY + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.ensembletable + "'>" + rows[i].value.ensembletable + "</a>"
+                    rows[i].value.testsplitimages = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGCLARITY + "&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testsplitimages + "'>" + rows[i].value.testsplitimages + "</a>"
+                    rows[i].value.confusionmatrix = "<a href='/api/getobject?bucketname=" + SPARKLETRAININGCLARITY + "&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.confusionmatrix + "'>" + rows[i].value.confusionmatrix + "</a>"
                     trows.push(rows[i])
                 }
             }
@@ -660,8 +666,8 @@ router.get('/api/getinclusiontraininguploads',
         cloudant_data.getInclusionTrainingItems(db).then((rows) =>{
             var trows = []
             for (var i = 0; i < rows.length; i++) {
-                rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkletraininginclusions&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
-                rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkletraininginclusions&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
+                rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGINCLUSIONS + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGINCLUSIONS + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"            
                 if (rows[i].value.roc_ar != undefined) {
                     rows[i].value.completed = 'Yes'
                 } else {
@@ -689,12 +695,12 @@ router.get('/api/getinclusiontrainingresults',
             var trows = []
             for (var i = 0; i < rows.length; i++) {
                 if (rows[i].value.roc_ar != undefined) {
-                    rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=sparkletraininginclusions&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
-                    rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=sparkletraininginclusions&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"
-                    rows[i].value.roc_ar = "<a href='/api/getobject?bucketname=sparkletraininginclusions&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_ar) + "'>" + rows[i].value.roc_ar + "</a>"
-                    rows[i].value.roc_a = "<a href='/api/getobject?bucketname=sparkletraininginclusions&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_a) + "'>" + rows[i].value.roc_a + "</a>"
-                    rows[i].value.roc_r = "<a href='/api/getobject?bucketname=sparkletraininginclusions&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_r) + "'>" + rows[i].value.roc_r + "</a>"
-                    rows[i].value.test_images_zip = "<a href='/api/gettrainingfile?bucketname=sparkletraininginclusions&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.test_images_zip + "'>" + rows[i].value.test_images_zip + "</a>"
+                    rows[i].value.trainingfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGINCLUSIONS + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.trainingfile + "'>" + rows[i].value.trainingfile + "</a>"
+                    rows[i].value.testfile = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGINCLUSIONS + "&contenttype=application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.testfile + "'>" + rows[i].value.testfile + "</a>"
+                    rows[i].value.roc_ar = "<a href='/api/getobject?bucketname=" + SPARKLETRAININGINCLUSIONS + "&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_ar) + "'>" + rows[i].value.roc_ar + "</a>"
+                    rows[i].value.roc_a = "<a href='/api/getobject?bucketname=" + SPARKLETRAININGINCLUSIONS + "&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_a) + "'>" + rows[i].value.roc_a + "</a>"
+                    rows[i].value.roc_r = "<a href='/api/getobject?bucketname=" + SPARKLETRAININGINCLUSIONS + "&filepath=" + rows[i].value.trainingtimestamp + "/" + encodeURIComponent(rows[i].value.roc_r) + "'>" + rows[i].value.roc_r + "</a>"
+                    rows[i].value.test_images_zip = "<a href='/api/gettrainingfile?bucketname=" + SPARKLETRAININGINCLUSIONS + "&contenttype=application/zip&filepath=" + rows[i].value.trainingtimestamp + "/" + rows[i].value.test_images_zip + "'>" + rows[i].value.test_images_zip + "</a>"
                     trows.push(rows[i])
                 }
             }
@@ -718,7 +724,7 @@ router.get('/api/getcisgoitems',
         cloudant_data.getCisgoCloudantItems(db, controlnumber).then((rows) =>{
             var crows = []
             for (var i = 0; i < rows.length; i++) {
-                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=cisgoimages&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=" + rows[i].value.bucketname + "&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
                 crows.push(rows[i]);    
             }
             var item = new Object();
@@ -741,7 +747,7 @@ router.get('/api/getsparkletableitems',
         cloudant_data.getSparkleCloudantItems(db, controlnumber).then((rows) =>{
             var crows = []
             for (var i = 0; i < rows.length; i++) {
-                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=sparkletabledata&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=" + rows[i].value.bucketname  + "&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
                 crows.push(rows[i]);    
             }
             var item = new Object();
@@ -765,7 +771,7 @@ router.get('/api/getascitems',
             var crows = []
             for (var i = 0; i < rows.length; i++) {
                 var ctrlnumber = rows[i].value.controlnumber
-                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=heliumwireframes&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=" + rows[i].value.bucketname  + "&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
                 crows.push(rows[i]);    
             }
             var item = new Object();
@@ -788,7 +794,7 @@ router.get('/api/getplotitems',
         cloudant_data.getPlotCloudantItems(db, controlnumber).then((rows) =>{
             var crows = []
             for (var i = 0; i < rows.length; i++) {
-                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=sparkleplots&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
+                rows[i].value.fileanchor = "<a href='/api/getobject?bucketname=" + rows[i].value.bucketname + "&filepath=" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "'>" + rows[i].value.controlnumber + "/" + rows[i].value.filepath + "</a>"
                 crows.push(rows[i]);    
             }
             var item = new Object();
