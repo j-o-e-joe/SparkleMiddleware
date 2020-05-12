@@ -43,6 +43,21 @@ module.exports = {
             
         })
     },
+    addWireframeToStorage: function(bucketname, controlnumber, wireframetimestamp, filename, filebody) {
+        return new Promise((resolve, reject)=>{
+            cos.putObject({
+                Bucket: bucketname, 
+                Key: controlnumber + "/" + wireframetimestamp + "/A_Crown_Wireframe/" + filename, 
+                Body: filebody
+            }).promise()
+            .then(() => {
+                resolve();
+            })
+            .catch((e) => {
+                reject(e)
+            });
+        })
+    },
     addCutwiseItemToStorage: function(bucketname, filename, filebody) {
         return new Promise((resolve, reject)=>{
             cos.putObject({

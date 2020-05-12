@@ -219,12 +219,15 @@
                   $.get("/api/getascitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>Training Id</th><th>File</th>" );  
+                        rows.push("<tr><th></th><th>Username</th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>Wireframe Timestamp</th><th>Device</th><th>Training Id</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td><input type=\"button\" class=\"delete-asc-item\" id=\"" + object.value._id + "&bucketname=" + object.value.bucketname + "&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
+                                                    + "</td><td>" + object.value.wireframeusername
                                                     + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.sparkletabletimestamp 
+                                                    + "</td><td>" + object.value.wireframetimestamp 
+                                                    + "</td><td>" + object.value.wireframedevice
                                                     + "</td><td>" + object.value.trainingid
                                                     + "</td><td>" + object.value.fileanchor
 								                    + "</td></tr>");

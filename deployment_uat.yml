@@ -1,0 +1,135 @@
+---
+  apiVersion: v1
+  kind: Service
+  metadata:
+      name: sparklemiddleware-service
+  spec:
+      type: ClusterIP
+      selector:
+          app: sparklemiddleware
+      ports:
+          - protocol: "TCP"
+            port: 8080
+            targetPort: 3000
+  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sparklemiddleware
+spec:
+    selector:
+      matchLabels:
+        app: sparklemiddleware
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: sparklemiddleware
+      spec:
+        containers:
+        - name: sparklemiddleware
+          image: us.icr.io/sparkle-uat/sparklemiddleware:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: CISGOIMAGES
+              value: "cisgoimages-uat"
+            - name: CUTWISEUPLOADS
+              value: "cutwiseuploads-uat"
+            - name: HELIUMUPLOADS
+              value: "heliumuploads-uat"
+            - name: HELIUMWIREFRAMES
+              value: "heliumwireframes-uat"
+            - name: SPARKLEPLOTS
+              value: "sparkleplots-uat"
+            - name: SPARKLETABLEDATA
+              value: "sparkletabledata-uat"
+            - name: SPARKLETRAININGCLARITY
+              value: "sparkletrainingclarity-uat"
+            - name: SPARKLETRAININGINCLUSIONS
+              value: "sparkletraininginclusions-uat"
+            - name: SPARKLETRAININGWIREFRAME
+              value: "sparkletrainingwireframe-uat"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: SECRET_KEY
+            - name: CISGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: CISGO_PASSWORD
+            - name: CLOUDANT_ACCOUNT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: CLOUDANT_ACCOUNT_URL
+            - name: CLOUDANT_USERNAME 
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: CLOUDANT_USERNAME
+            - name: CLOUDANT_PASSWORD 
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: CLOUDANT_PASSWORD
+            - name: COS_AUTH_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: COS_AUTH_ENDPOINT
+            - name: COS_SERVICEINSTANCE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: COS_SERVICEINSTANCE_ID
+            - name: COS_API_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: COS_API_KEY_ID
+            - name: COS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: COS_ENDPOINT
+            - name: APPID_TENANTID
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: APPID_TENANTID
+            - name: APPID_CLIENTID
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: APPID_CLIENTID
+            - name: APPID_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: APPID_SECRET
+            - name: APPID_OAUTHSERVERURL
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: APPID_OAUTHSERVERURL
+            - name: APPID_CUTWISE_OAUTHSERVERURL
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: APPID_CUTWISE_OAUTHSERVERURL
+            - name: RABBITMQ_CONNECTION
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: RABBITMQ_CONNECTION
+            - name: RABBITMQ_CERTIFICATE_BASE64
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: RABBITMQ_CERTIFICATE_BASE64
+        nodeSelector:
+          node: 10.220.196.207

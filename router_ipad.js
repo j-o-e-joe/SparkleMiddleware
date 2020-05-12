@@ -148,6 +148,50 @@ router.post('/api/uploadgrade',
     }
 );
 
+router.post('/api/uploadsvg', 
+    passport.authenticate(APIStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    upload.single('file'), (req, res) => {
+
+        var bucketname = req.body.bucketname;
+        var controlnumber = req.body.controlnumber;
+        var cisgotimestamp = req.body.cisgotimestamp;
+        var sparkletabletimestamp =  req.body.sparkletabletimestamp;
+        var wireframetimestamp = req.body.wireframetimestamp;
+        var wireframedevice = req.body.wireframedevice;
+        var wireframeusername = req.body.wireframeusername;
+        var trainingid = req.body.trainingid;
+        var filename = req.file.originalname;
+        var filebody = req.file.buffer;
+    
+        s3_data.addWireframeToStorage(bucketname, controlnumber, wireframetimestamp, filename, filebody)
+        .then(() => { 
+            var wireframeitem = new Object();
+            wireframeitem.bucketname = bucketname;
+            wireframeitem.controlnumber = controlnumber;
+            wireframeitem.cisgotimestamp = cisgotimestamp;
+            wireframeitem.sparkletabletimestamp = sparkletabletimestamp;
+            wireframeitem.wireframetimestamp = wireframetimestamp;
+            wireframeitem.wireframedevice = wireframedevice;
+            wireframeitem.wireframeusername = wireframeusername;
+            wireframeitem.trainingid = trainingid;
+            wireframeitem.filepath = wireframetimestamp + "/A_Crown_Wireframe/" + filename;
+            cloudant_data.addItemToCloudantDB(db, wireframeitem).then(()=>{
+                res.write('New Wireframe success.');
+                res.end();
+            }).catch((e)=>{
+                res.write('Error Received: ' + e);
+                res.end();
+            });
+        }).catch((e) => { 
+            res.write('Error: Json data not formatted correctly! ' + err);
+            res.end();
+        }); 
+
+    }
+);
+
 router.post('/api/uploadplot', 
     passport.authenticate(APIStrategy.STRATEGY_NAME, {
         session: false

@@ -104,7 +104,7 @@ module.exports = {
                         },
                         "asc_by_controlnumber": {
                         "analyzer": "standard",
-                        "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + HELIUMUPLOADS + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
+                        "index": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + HELIUMWIREFRAMES + "\") {\n    index(\"controlnumber\", doc.controlnumber, {store:true});\n  }\n}"
                         },
                         "plot_by_timestamp": {
                         "analyzer": "standard",
@@ -224,7 +224,7 @@ module.exports = {
     },
     getASCCloudantItems: function(db, controlnumber) {
         return new Promise((resolve, reject)=>{
-            db.search('all', 'asc_by_controlnumber', { 'include_docs': true, q: 'controlnumber:' + controlnumber + '*' }, function(err, result) {
+            db.search('all', 'asc_aligned_by_controlnumber', { 'include_docs': true, q: 'controlnumber:' + controlnumber + '*' }, function(err, result) {
                 if (err) {
                     reject(err)
                 } else {
