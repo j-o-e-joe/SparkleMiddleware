@@ -40,16 +40,6 @@ open
     console.log(err);
 });
 
-open
-  .then(conn => {
-    return conn.createChannel();
-  })
-  .then(ch => {
-    return ch.assertQueue("sparkle_training", { autoDelete: false, durable: false });
-  })
-  .catch(err => {
-    console.log(err);
-});
 
 var sparklepipelinelogs = []
 open.then(conn => {
@@ -68,35 +58,6 @@ open.then(conn => {
         ch.consume(q.queue, function(msg) {
             if(msg.content) {
                 sparklepipelinelogs.push(msg.content.toString());
-            }
-        }, {
-            noAck: true
-        });
-    });
-})
-.catch(err => {
-    console.log(err);
-});
-
-var sparkletraininglogs = []
-open.then(conn => {
-    return conn.createChannel();
-})
-.then(ch => {
-    var exchange = 'sparkle_training_logs';
-    console.log(exchange)
-    return ch
-    .assertExchange(exchange, "fanout", { durable: false })
-    .then(() => {
-        return ch.assertQueue('', { exclusive: true });
-    })
-    .then(q => {
-        sparkletraininglogs = []
-        ch.bindQueue(q.queue, exchange, '');
-        ch.consume(q.queue, function(msg) {
-            if(msg.content) {
-                console.log(msg.content.toString())
-                sparkletraininglogs.push(msg.content.toString());
             }
         }, {
             noAck: true
@@ -147,34 +108,24 @@ function runsparkleprocessing(controlnumber, cisgotimestamp) {
     });
 }
 
-function runinclusiontraining(trainingtimestamp) {
-    return new Promise((resolve, reject)=>{
-         open.then(conn => {
-            return conn.createChannel();
-        })
-        .then(ch => {
-            let message = "{\"trainingid\":\"" + trainingtimestamp + "\", \"trianingtype\":\"inclusions\"}"
-            ch.publish('', 'sparkle_training', Buffer(message));
-            resolve(message);
-        })
-        .catch(err => {
-          reject(err);
-        });
-    });
-}
-
-function runclaritytraining(trainingtimestamp) {
-    return new Promise((resolve, reject)=>{
+function runtraining(trainingitem, trainingtype) {
+    return new Promise((resolve, reject)=>{      
+        let open = amqp.connect(connectionString, { ca: [caCert] });
         open.then(conn => {
             return conn.createChannel();
         })
         .then(ch => {
-            let message = "{\"trainingid\":\"" + trainingtimestamp + "\", \"trianingtype\":\"clarity\"}"
+            let message = "{\"trainingid\" : \"" + trainingitem.trainingtimestamp 
+            + "\", \"trianingtype\" : \"" + trainingtype
+            + "\", \"epocs\" : \"" + trainingitem.epocs
+            + "\", \"spe\" : \"" + trainingitem.spe + "\"}"
+            ch.assertQueue("sparkle_training", { autoDelete: false, durable: false });
             ch.publish('', 'sparkle_training', Buffer(message));
             resolve(message);
         })
         .catch(err => {
-          reject(err);
+            console.log("Error running training: " + err)
+            reject(err);
         });
     });
 }
@@ -315,11 +266,13 @@ router.post('/api/runclaritytraining',
             res.end()
             return
         }
-
+        
         var bucketname = SPARKLETRAININGCLARITY
         var testfile = undefined
         var trainingfile = undefined
         var trainingtimestamp = new Date(new Date().toUTCString()).toISOString();
+        var spe = req.body.spe;
+        var epocs = req.body.epocs;
         var promises = [];
 
         for (var i = 0; i < req.files.length; i++) {
@@ -348,8 +301,10 @@ router.post('/api/runclaritytraining',
                 trainingitem.testfile = testfile;
                 trainingitem.trainingfile = trainingfile;
                 trainingitem.trainingtimestamp = trainingtimestamp;
+                trainingitem.epocs = epocs;
+                trainingitem.spe = spe;
                 cloudant_data.addItemToCloudantDB(db, trainingitem).then(()=>{
-                    runclaritytraining(trainingtimestamp).then(()=>{
+                    runtraining(trainingitem, "clarity").then(()=>{
                         res.write("Success");
                         res.end();
                     }).catch((e)=>{
@@ -413,8 +368,10 @@ router.post('/api/runinclusiontraining',
                 trainingitem.testfile = testfile;
                 trainingitem.trainingfile = trainingfile;
                 trainingitem.trainingtimestamp = trainingtimestamp;
+                trainingitem.epocs = epocs;
+                trainingitem.spe = spe;
                 cloudant_data.addItemToCloudantDB(db, trainingitem).then(()=>{
-                    runinclusiontraining(trainingtimestamp).then(()=>{
+                    runtraining(trainingtimestamp, "inclusions").then(()=>{
                         res.write("Success");
                         res.end();
                     }).catch((e)=>{
@@ -932,8 +889,49 @@ router.get('/api/gettrainingbaselist',
             for (var [key, value] of map) {
                 var plotitem = []
                 plotitem.push(key);
-                plotitem.push(value);
+                plotitem.push(value[0]);
+                plotitem.push(value[1]);
                 crows.push(plotitem);    
+            }
+
+            var ws_name = "Sheet1";
+            var ws = xlsx.utils.aoa_to_sheet(crows);
+            var wb = xlsx.utils.book_new();
+            xlsx.utils.book_append_sheet(wb, ws, ws_name);
+            var wbout = xlsx.write(wb, {bookType:'xlsx', bookSST:false, type:'array' });
+            res.setHeader('Content-disposition', 'attachment; filename=test.xlsx');
+            res.writeHead(200, {'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            res.write(new Buffer.from(wbout), 'binary');
+            res.end();
+           
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+router.get('/api/getgradelist',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        var startdate = req.query.startdate
+        var enddate = req.query.enddate;
+        cloudant_data.getGradeListCloudantItems(db, startdate, enddate).then((map) => {
+
+            var crows = []
+            crows.push(["Control Number", "Grade Timestamp", "Training ID", "GIA Grade", "Continuous Score", "A Score", "B Score", "C Score"])
+            for (var [key, value] of map) {
+                var gradeitem = []
+                gradeitem.push(key);
+                gradeitem.push(value[0]);
+                gradeitem.push(value[1]);
+                gradeitem.push(value[2]);
+                gradeitem.push(value[3]);
+                gradeitem.push(value[4]);
+                gradeitem.push(value[5]);
+                gradeitem.push(value[6]);
+                crows.push(gradeitem);    
             }
 
             var ws_name = "Sheet1";

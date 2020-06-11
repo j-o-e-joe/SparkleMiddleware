@@ -35,6 +35,21 @@ router.get('/api/getcisgoitems_processed',
     }
 );
 
+router.get('/api/getwireframeitems_processed',
+	passport.authenticate(APIStrategy.STRATEGY_NAME, {
+	    session: false
+	}),
+	function(req, res)  {
+        cloudant_data.getWireframeViewItems(db, req.query.controlnumber).then((obj)=>{
+            res.json(obj);
+            res.end(); 
+        }).catch((e)=>{
+            res.write('Error Received: ' + e);
+            res.end();
+        });
+    }
+);
+
 
 router.get('/api/getgradeitems_bycontrolnumber',
      passport.authenticate(APIStrategy.STRATEGY_NAME, {

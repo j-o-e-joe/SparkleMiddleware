@@ -6,7 +6,8 @@
         <meta name="author" content="">
       
         <title>Auto Plot and Clarity Grade</title>
-
+        <!-- JQuery ui CSS -->
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
         <!-- Bootstrap core CSS -->
         <link rel="stylesheet" type="text/css" href="local.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
@@ -102,6 +103,38 @@
                     </div>
                 </div>
             </div>
+
+            <div class="jumbotron">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h3 class="display-4">Get Grade List</h3>
+                            <form action="/api/getgradelist" id="gradelistform" >
+                                <table class="table">
+                                    <tbody>
+                                    <tr>
+                                        <td colspan="2">
+                                            Get a list of grades for a date range.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="1"><p class="font-weight-bold">Start Date</p></td><td colspan="3">
+                                            <input type="text" id="startdate" name="startdate"> 
+                                        </td>
+                                        <td colSpan="1"><p class="font-weight-bold">End Date</p></td><td colspan="3">
+                                            <input type="text" id="enddate" name="enddate"> 
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><input type="submit" id="grade-list" value="Submit"/></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="jumbotron">
                     <div class="container">
@@ -173,6 +206,7 @@
             <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
             <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
             <script>
                 const transporterurl = "http://localhost:35200";
 
@@ -459,6 +493,8 @@
                         });
                     });
                     
+                    $("#startdate").datepicker();
+                    $("#enddate").datepicker();
                     get_transporter_status();
                     getsparklelogs();
                 });
@@ -503,6 +539,26 @@
                         processData: false
                     });
                    
+                });
+
+                $("form#gradelistform").submit(function(e) {
+                    e.preventDefault();    
+                    var startdate = new Date($('#startdate').val()).toISOString();
+                    var enddate = new Date($('#enddate').val()).toISOString();
+                    fetch("/api/getgradelist?startdate=" + startdate + "&enddate=" + enddate)
+                    .then(resp => resp.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        // the filename you want
+                        a.download = 'grade_list.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(() => alert('oh no!'));
                 });
 
                 $("#transporter_control").keypress(function (e) {

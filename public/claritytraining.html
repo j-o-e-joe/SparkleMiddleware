@@ -91,6 +91,14 @@
                                         </td>
 
                                     </tr>
+                                    <tr>
+                                        <td colSpan="1"><p class="font-weight-bold">Number of Epocs</p></td><td colspan="2">
+                                            <input type="text" id="epocs" value="60"> 
+                                        </td>
+                                        <td colSpan="1"><p class="font-weight-bold">Steps Per Epoc</p></td><td colspan="2">
+                                            <input type="text" id="spe" value="100"> 
+                                        </td>
+                                    </tr>
                                     <tr><td><img id="trainingimg" width="26" height="26" src="loading.gif" alt="loading..." /></td><td colSpan="4"><input id="submit-all" ref="btn" type="submit" value="Submit"/></td></tr>
                                     </tbody>
                                 </table>
@@ -253,7 +261,7 @@
                         a.click();
                         window.URL.revokeObjectURL(url);
                     })
-                    .catch(() => alert('oh no!'));
+                    .catch(() => alert('Error downloading training list'));
                 });
 
                 $("form#trainingform").submit(function(e) {
@@ -263,6 +271,8 @@
                     let formData = new FormData()
                     formData.append('files', document.getElementById('training').files[0], 'training.xlsx')
                     formData.append('files', document.getElementById('test').files[0], 'test.xlsx')
+                    formData.append('epocs', document.getElementById('epocs').value)
+                    formData.append('spe', document.getElementById('spe').value)
 
                     $.ajax({
                         url: "/api/runclaritytraining",

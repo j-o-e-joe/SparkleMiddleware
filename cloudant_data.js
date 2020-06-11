@@ -326,12 +326,12 @@ module.exports = {
             });  
         });
     },
-    getTrainingCloudantItems: function(db, startdate, enddate) {
+    getGradeListCloudantItems: function(db, startdate, enddate) {
         return new Promise((resolve, reject)=>{
  
             var sdate = new Date(startdate);
             var edate = new Date(enddate);
-            db.view('all', 'plot_timestamp_items', {include_docs: false},
+            db.view('all', 'gradeitems', {include_docs: false},
             function (err, result) {
                 if (err) {
                     console.log(err);
@@ -339,18 +339,59 @@ module.exports = {
                 } else {
                     var map = new Map()
                     for (var i = 0; i < result.rows.length; i++) {
-                        var plotdate = result.rows[i].key
-                        var ctrlnumber = result.rows[i].value
+                         var ctrlnumber = result.rows[i].value.controlnumber
+                         var grade_ts = result.rows[i].value.gradetimestap
+                         var trainingid = result.rows[i].value.trainingid
+                         var gia_grade = result.rows[i].value.gia_grade
+                         var cont_grade = result.rows[i].value.continuous_grade
+                         var a_score = result.rows[i].value.model_a_score
+                         var b_score = result.rows[i].value.model_b_score
+                         var c_score =  result.rows[i].value.model_c_score
+
+                        if (map.has(ctrlnumber)) {
+                            var dnew = new Date(grade_ts)
+                            var dexisting = new Date(map.get(ctrlnumber)[0])
+                             if (dnew > dexisting) {
+                                map.set(ctrlnumber, [grade_ts, trainingid, gia_grade, cont_grade, a_score, b_score, c_score])
+                            }
+                        } else {
+                            var cdate = new Date(grade_ts)
+                            if (cdate >= sdate && cdate <= edate) {
+                                map.set(ctrlnumber, [grade_ts, trainingid, gia_grade, cont_grade, a_score, b_score, c_score])
+                            }
+                        }
+                    }
+                    resolve(map);
+                }
+            });  
+        });
+    },
+    getTrainingCloudantItems: function(db, startdate, enddate) {
+        return new Promise((resolve, reject)=>{
+ 
+            var sdate = new Date(startdate);
+            var edate = new Date(enddate);
+            db.view('all', 'gradeitems', {include_docs: false},
+            function (err, result) {
+                if (err) {
+                    console.log(err);
+                    reject(err)
+                } else {
+                    var map = new Map()
+                    for (var i = 0; i < result.rows.length; i++) {
+                         var ctrlnumber = result.rows[i].value.controlnumber
+                         var plotdate = result.rows[i].value.plottimestamp
+                         var giagrade = result.rows[i].value.gia_grade
                         if (map.has(ctrlnumber)) {
                             var dnew = new Date(plotdate)
-                            var dexisting = new Date(map.get(ctrlnumber))
+                            var dexisting = new Date(map.get(ctrlnumber)[0])
                              if (dnew > dexisting) {
-                                map.set(ctrlnumber, plotdate)
+                                map.set(ctrlnumber, [plotdate, giagrade])
                             }
                         } else {
                             var cdate = new Date(plotdate)
                             if (cdate >= sdate && cdate <= edate) {
-                                map.set(ctrlnumber, plotdate)
+                                map.set(ctrlnumber, [plotdate, giagrade])
                             }
                         }
                     }
@@ -370,9 +411,28 @@ module.exports = {
                     var obj = {}
                     if (data.rows.length > 0) {
                         var value = data.rows[data.rows.length - 1].value;
-                        obj = {"controlnumber": value.controlnumber,  "cisgotimestamp": value.cisgotimestamp, "sparkletabletimestamp": value.sparkletabletimestamp, "plottimestamp": value.plottimestamp, "trainingid": value.trainingid};
+                        obj = {"controlnumber": value.controlnumber,  "cisgotimestamp": value.cisgotimestamp, "sparkletabletimestamp": value.sparkletabletimestamp, "plotusername": value.plotusername, "plottimestamp": value.plottimestamp, "trainingid": value.trainingid};
                     }
                     resolve(obj);
+                }
+            });  
+        });
+    },
+    getWireframeViewItems: function(db, controlnumber) {
+        return new Promise((resolve, reject)=>{
+            db.view('all', 'cisgoitems_asc_aligned', 
+            {'key': controlnumber},
+            function (err, data) {
+                if (err) {
+                    reject(err)
+                } else {
+                    console.log(data)
+                    var wfobj = {}
+                    if (data.rows.length > 0) {
+                        var value = data.rows[data.rows.length - 1].value;
+                        wfobj = {"wireframetimestamp": value.wireframetimestamp};
+                    }
+                    resolve(wfobj);
                 }
             });  
         });
