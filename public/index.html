@@ -102,97 +102,74 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="jumbotron">
                 <div class="container">
                     <div class="row">
                         <div class="col-md-5">
-                            <h3 class="display-4">Get Grade List</h3>
-                            <form action="/api/getgradelist" id="gradelistform" >
-                                <table class="table">
-                                    <tbody>
-                                    <tr>
-                                        <td colspan="2">
-                                            Get a list of grades for a date range.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colSpan="1"><p class="font-weight-bold">Start Date</p></td><td colspan="3">
-                                            <input type="text" id="startdate" name="startdate"> 
-                                        </td>
-                                        <td colSpan="1"><p class="font-weight-bold">End Date</p></td><td colspan="3">
-                                            <input type="text" id="enddate" name="enddate"> 
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="2"><input type="submit" id="grade-list" value="Submit"/></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="jumbotron">
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h3 class="display-4">Search</h3>
-                                <div class="control-group" style="height:100px;">
-                                    <p class="font-weight-bold">Search By Control Number</p>
-                                    <input type="text" id="filter-cisgo-control" value=""/>
-                                    <input type="submit" id="filter-cisgo" value="Search"/>
-                                </div>
+                            <h3 class="display-4">Search</h3>
+                            <div class="control-group" style="height:100px;">
+                                <p class="font-weight-bold">Search By Control Number</p>
+                                <input type="text" id="filter-cisgo-control" value=""/>
+                                <input type="submit" id="filter-cisgo" value="Search"/>
                             </div>
-                        </div> 
+                        </div>
+                    </div> 
 
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="display-5">Cisgo Images</h4>
-                                <table class='table' id="cisgoitems"></table>
-                            </div>
-                        </div> 
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="display-5">Sparkle Table Processing</h4>
-                                <table class='table' id="sparkletableprocessing"></table>
-                            </div>
-                        </div> 
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="display-5">SVG Wireframes</h4>
-                                <table class='table' id="ascitems"></table>
-                            </div>
-                        </div> 
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="display-5">Predicted Plots</h4>
-                                <table class='table' id="plotitems"></table>
-                            </div>
-                        </div> 
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-5">
-                                <h4 class="display-5">Predicted Grades</h4>
-                                <table class='table' id="grades"></table>
-                            </div>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h4 class="display-5">Cisgo Images</h4>
+                            <table class='table' id="cisgoitems"></table>
                         </div>
-                        <hr>
-                        <div class="row">
-                                <div class="col-md-5">
-                                    <h4 class="display-5">GIA Provided Data</h4>
-                                    <table class='table' id="reports"></table>
-                                </div>
+                    </div> 
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h4 class="display-5">Sparkle Table Processing</h4>
+                            <table class='table' id="sparkletableprocessing"></table>
                         </div>
+                    </div> 
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h4 class="display-5">SVG Wireframes</h4>
+                            <table class='table' id="ascitems"></table>
+                        </div>
+                    </div> 
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h4 class="display-5">Predicted Plots</h4>
+                            <table class='table' id="plotitems"></table>
+                        </div>
+                    </div> 
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-5">
+                            <h4 class="display-5">Predicted Grades</h4>
+                            <table class='table' id="grades"></table>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                            <div class="col-md-5">
+                                <h4 class="display-5">GIA Provided Data</h4>
+                                <table class='table' id="reports"></table>
+                            </div>
                     </div>
                 </div>
             </div>
+
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-5">
+                        <h3 class="display-4">Recent Uploads</h3>
+                        <div class="row">
+                        <table class='table' id="recentcisgouploads"></table>
+                        </div>
+                    </div>
+                </div> 
+            </div>
+        </div>
         </main>
     
         <footer class="container">
@@ -209,6 +186,24 @@
             <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
             <script>
                 const transporterurl = "http://localhost:35200";
+
+                function get_recent_cisgo_uploads() {
+                  $("#recentcisgouploads").empty();
+                  $.get("/api/getrecentcisgouploads", function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>GIA Grade</th><th>Continuous Score</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td><input type=\"button\" class=\"reprocess-cisgo-item\" id=\"" + 0 + "&controlnumber=" + object.value.controlnumber + "&cisgotimestamp=" + object.value.cisgotimestamp + "\" value=\"Reprocess\">"
+                                                    + "</td><td>" + object.value.controlnumber 
+                                                    + "</td><td>" + object.value.cisgotimestamp 
+                                                    + "</td><td>" + object.value.gia_grade
+                                                    + "</td><td>" + object.value.continuous_grade
+								                    + "</td></tr>");
+                        });
+                        $("#recentcisgouploads").append(rows.join(""));
+                    });
+                }
 
                 function get_cisgo_items(controlnumber) {
                   $("#cisgoitems").empty();
@@ -458,6 +453,12 @@
                         get_report_items(filterbytext)
                     }, false);
 
+                    $(document).on('click', "input.reprocess-cisgo-item", function () {
+                        $.get("/api/reprocess-cisgo-item?id="+this.id, function(data, status) {
+                            get_cisgo_items_lastday();
+                        });
+                    });
+
                     $(document).on('click', "input.delete-cisgo-item", function () {
                         $.get("/api/deleteitem?id="+this.id, function(data, status) {
                             var filterbytext = $('#filter-cisgo-control').val();
@@ -496,6 +497,7 @@
                     $("#startdate").datepicker();
                     $("#enddate").datepicker();
                     get_transporter_status();
+                    get_recent_cisgo_uploads();
                     getsparklelogs();
                 });
 

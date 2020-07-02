@@ -222,6 +222,35 @@ module.exports = {
             });
         });
     },
+    getCisgoItemsFromLastDay: function(db) {
+        return new Promise((resolve, reject)=>{
+            var map = new Map()
+            db.view('all', 'cisgo_items_for_today', {'include_docs': true}, function (err, result) {
+                if (err) {
+                    console.log(err)
+                    reject(err)
+                } else {
+                    rows = result.rows.sort(function(a,b){
+                        return new Date(b.value.cisgotimestamp) - new Date(a.value.cisgotimestamp);
+                    });
+                    for (var i = 0; i < rows.length; i++) {
+                        map.set(rows[i].doc.controlnumber, [rows[i].doc.cisgotimestamp, 'undefined', 'undefined'])
+                    }
+                }
+            });
+            db.view('all', 'grade_items_for_today', {'include_docs': true}, function (err, result) {
+                if (err) {
+                    console.log(err)
+                    reject(err)
+                } else {
+                    for (var i = 0; i < result.rows.length; i++) {
+                        map.set(result.rows[i].doc.controlnumber, [result.rows[i].doc.cisgotimestamp, result.rows[i].doc.gia_grade, result.rows[i].doc.continuous_grade])
+                    }
+                    resolve(map)
+                }
+            });
+        });
+    },
     getASCCloudantItems: function(db, controlnumber) {
         return new Promise((resolve, reject)=>{
             db.search('all', 'asc_aligned_by_controlnumber', { 'include_docs': true, q: 'controlnumber:' + controlnumber + '*' }, function(err, result) {

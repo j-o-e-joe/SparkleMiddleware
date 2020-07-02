@@ -695,6 +695,57 @@ router.get('/api/getcisgoitems',
     }
 );
 
+                  
+router.get('/api/getrecentcisgouploads', 
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        cloudant_data.getCisgoItemsFromLastDay(db).then((map) =>{
+            var crows = []
+            for (var [key, value] of map) {
+                var gradeitem = new Object
+                gradeitem.controlnumber = key;
+                gradeitem.cisgotimestamp = value[0];
+                gradeitem.gia_grade = value[1];
+                gradeitem.continuous_grade = value[2];
+                crows.push({value: gradeitem});    
+            }
+            var rows = crows.sort(function(a,b){
+                return new Date(b.value.cisgotimestamp) - new Date(a.value.cisgotimestamp);
+            });
+            var item = new Object();
+            item.rows = rows
+            res.json(item);
+            res.end();
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
+router.get('/api/reprocess-cisgo-item',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {  
+        var docid = req.query.id; 
+        var controlnumber = req.query.controlnumber;
+        var cisgotimestamp = req.query.cisgotimestamp;
+        let message = "{\"controlnumber\":\"" + controlnumber + "\", \"cisgotimestamp\":\"" + cisgotimestamp + "\"}"
+        console.log(message)
+        runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
+            res.write("success");
+            res.end();
+        }).catch((e)=>{ 
+            console.log(e)
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);                          
+
 router.get('/api/getsparkletableitems', 
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
