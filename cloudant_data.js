@@ -225,20 +225,17 @@ module.exports = {
     getCisgoItemsFromLastDay: function(db) {
         return new Promise((resolve, reject)=>{
             var map = new Map()
-            db.view('all', 'cisgo_items_for_today', {'include_docs': true}, function (err, result) {
+            db.view('all', 'cisgo_items_for_today', {'include_docs': true, 'update': true, 'descending': true, 'limit':200 }, function (err, result) {
                 if (err) {
                     console.log(err)
                     reject(err)
                 } else {
-                    rows = result.rows.sort(function(a,b){
-                        return new Date(b.value.cisgotimestamp) - new Date(a.value.cisgotimestamp);
-                    });
-                    for (var i = 0; i < rows.length; i++) {
-                        map.set(rows[i].doc.controlnumber, [rows[i].doc.cisgotimestamp, 'undefined', 'undefined'])
+                    for (var i = 0; i < result.rows.length; i++) {
+                        map.set(result.rows[i].doc.controlnumber, [result.rows[i].doc.cisgotimestamp, 'undefined', 'undefined'])
                     }
                 }
             });
-            db.view('all', 'grade_items_for_today', {'include_docs': true}, function (err, result) {
+            db.view('all', 'grade_items_for_today', {'include_docs': true, 'update': true, 'descending': true, 'limit':200 }, function (err, result) {
                 if (err) {
                     console.log(err)
                     reject(err)
