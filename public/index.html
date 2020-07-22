@@ -258,12 +258,14 @@
                   $.get("/api/getsparkletableitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>File</th>" );  
+                        rows.push("<tr><th></th><th>Control Number</th><th>Cisgo Timestamp</th><th>Sparkle Timestamp</th><th>Fit</th><th>File</th>" );  
                         $.each(obj.rows, function(index, object) {
+                            var misfit = (object.value.flagged_for_misfit_evaluation === 'yes') ? "Misaligned" : "";
                             rows.push( "<tr><td><input type=\"button\" class=\"delete-sparkle-table-item\" id=\"" + object.value._id + "&bucketname=" + object.value.bucketname + "&filepath=" +  object.value.controlnumber + "/" + object.value.filepath + "\" value=\"Delete\">"
                                                     + "</td><td>" + object.value.controlnumber 
                                                     + "</td><td>" + object.value.cisgotimestamp 
                                                     + "</td><td>" + object.value.sparkletabletimestamp 
+                                                    + "</td><td>" + misfit
                                                     + "</td><td>" + object.value.fileanchor
 								                    + "</td></tr>");
                         });
