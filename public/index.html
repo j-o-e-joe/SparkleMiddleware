@@ -323,7 +323,7 @@
                   $.get("/api/getgradeitems?controlnumber=" + controlnumber, function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th>Username</th><th>Cisgo Timestamp</th><th>Plot Timestamp</th><th>Grade Timestamp</th><th>Training Id</th><th>Control Number</th><th>GIA Grade</th><th>Continuous Score</th><th>A Score</th><th>B Score</th><th>C Score</th><th>High Clarity</th><th>VS1</th><th>VS2</th><th>SI1</th><th>SI2</th><th>I1</th><th>I2</th><th>I3</th>");  
+                        rows.push("<tr><th></th><th>Username</th><th>Cisgo Timestamp</th><th>Plot Timestamp</th><th>Grade Timestamp</th><th>Training Id</th><th>Control Number</th><th>GIA Grade</th><th>Continuous Score</th><th>C Score</th><th>I Score</th><th>F Score</th><th>High Clarity</th><th>VS1</th><th>VS2</th><th>SI1</th><th>SI2</th><th>I1</th><th>I2</th><th>I3</th>");  
                         $.each(obj.rows, function(index, object) {
                             rows.push( "<tr><td><input type=\"button\" class=\"delete-grade-item\" id=\"" + object.value._id + "\" value=\"Delete\">"
                                         + "</td><td>" + object.value.user 

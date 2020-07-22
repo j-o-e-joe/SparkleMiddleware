@@ -1104,7 +1104,7 @@ router.get('/api/getgradelist',
         cloudant_data.getGradeListCloudantItems(db, startdate, enddate).then((map) => {
 
             var crows = []
-            crows.push(["Control Number", "Grade Timestamp", "Training ID", "GIA Grade", "Continuous Score", "A Score", "B Score", "C Score"])
+            crows.push(["Control Number", "Grade Timestamp", "Training ID", "GIA Grade", "Continuous Score", "C Score", "I Score", "F Score"])
             for (var [key, value] of map) {
                 var gradeitem = []
                 gradeitem.push(key);
