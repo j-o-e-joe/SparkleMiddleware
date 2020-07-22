@@ -2,7 +2,6 @@ const express = require('express');
 const passport = require('passport');
 const multer  = require('multer');
 const AdmZip = require('adm-zip');
-const request = require('request')
 const xlsx = require('xlsx');
 const s3_data = require('./s3_data');
 const cloudant_data = require('./cloudant_data');
@@ -10,6 +9,8 @@ const config = require('./config');
 const fs = require('fs');
 const path = require('path');
 const amqp = require("amqplib");
+const dateformat = require('dateformat');
+const https = require('https');
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
@@ -25,48 +26,57 @@ var db = cloudant_data.initDBConnection();
 var router = express.Router();
 
 let connectionString = config.getRabbitMQConnection();
+let connectionSecret = config.getSessionSecret();
 let certificateBase64 = config.getRabbitMQCertificateBase64();
 let caCert = Buffer.from(certificateBase64, 'base64');
 
-let open = amqp.connect(connectionString, { ca: [caCert] });
-open
-  .then(conn => {
-    return conn.createChannel();
-  })
-  .then(ch => {
-    return ch.assertQueue("sparkle_fitting_pipeline", { autoDelete: false, durable: false });
-  })
-  .catch(err => {
-    console.log(err);
-});
-
+var open =  null;
 
 var sparklepipelinelogs = []
-open.then(conn => {
-    return conn.createChannel();
-})
-.then(ch => {
-    var exchange = 'sparkle_pipeline_logs';
-    return ch
-    .assertExchange(exchange, "fanout", { durable: false })
-    .then(() => {
-        return ch.assertQueue('', { exclusive: true });
-    })
-    .then(q => {
-        sparklepipelinelogs = []
-        ch.bindQueue(q.queue, exchange, '');
-        ch.consume(q.queue, function(msg) {
-            if(msg.content) {
-                sparklepipelinelogs.push(msg.content.toString());
-            }
-        }, {
-            noAck: true
+
+function createsparkleconnection() {
+    return new Promise((resolve, reject)=>{
+        open = amqp.connect(connectionString, { ca: [caCert] });
+        open
+        .then(conn => {
+            return conn.createChannel();
+        })
+        .then(ch => {
+            return ch.assertQueue("sparkle_fitting_pipeline", { autoDelete: false, durable: false });
+        })
+        .catch(err => {
+            reject(err);
+        });
+
+        open.then(conn => {
+            return conn.createChannel();
+        })
+        .then(ch => {
+            var exchange = 'sparkle_pipeline_logs';
+            return ch
+            .assertExchange(exchange, "fanout", { durable: false })
+            .then(() => {
+                return ch.assertQueue('', { exclusive: true });
+            })
+            .then(q => {
+                sparklepipelinelogs = []
+                ch.bindQueue(q.queue, exchange, '');
+                ch.consume(q.queue, function(msg) {
+                    if(msg.content) {
+                        sparklepipelinelogs.push(msg.content.toString());
+                    }
+                }, {
+                    noAck: true
+                });
+                resolve()
+            });
+        })
+        .catch(err => {
+            console.log(err);
+            reject(err);
         });
     });
-})
-.catch(err => {
-    console.log(err);
-});
+}
 
 function additemtodatastore(bucketname, fileitem, cisgotimestamp, controlnumber) {
     return new Promise((resolve, reject)=>{
@@ -389,6 +399,129 @@ router.post('/api/runinclusiontraining',
         });   
     }
    
+);
+
+router.get('/api/createsparkleconnection',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {        
+        createsparkleconnection().then(() => {
+            res.send("ok");
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        });
+    }
+);
+
+router.get('/api/getsparkleconnections',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) { 
+        https.request({ host: 'a7430add-136c-4e6f-9c51-e277a6e2e775.bkvfvtld0lmh0umkfi70.databases.appdomain.cloud', 
+            port: 32120,
+            path: '/api/connections',
+            method: 'GET',
+            rejectUnauthorized: false,
+            requestCert: true,
+            agent: false,
+            auth:'admin:' + connectionSecret}, (response) => {
+            response.on('data', (d) => {
+                var item = new Object();
+                const json = JSON.parse(d);
+                var trows = []
+                for(var i = 0; i < json.length; i++) {
+                    var obj = new Object();
+                    let unix_timestamp = json[i].connected_at
+                    var date = new Date(unix_timestamp);
+                    var connected_at = dateformat(date, "dddd, mmmm dS, yyyy, h:MM:ss TT");
+                    obj.name = json[i].name;
+                    obj.status = json[i].state;
+                    obj.client_properties = json[i].client_properties.platform 
+                    + '<br>' + json[i].client_properties.product
+                    + '<br>' + json[i].client_properties.version;
+                    obj.connected_at = connected_at;
+                    trows.push(obj)
+                }
+                item.rows = trows
+                res.json(item);
+                res.end();
+            });
+        }).on('error', (e) => {
+            console.error(e);
+        }).end();
+    }
+);
+
+router.get('/api/checksparkleconnection',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) { 
+        https.request({ host: 'a7430add-136c-4e6f-9c51-e277a6e2e775.bkvfvtld0lmh0umkfi70.databases.appdomain.cloud', 
+            port: 32120,
+            path: '/api/connections/' + encodeURIComponent(req.query.name),
+            method: 'GET',
+            rejectUnauthorized: false,
+            requestCert: true,
+            agent: false,
+            auth:'admin:' + connectionSecret}, (response) => {
+            response.on('data', (d) => {
+                const json = JSON.parse(d);
+                if(json.hasOwnProperty('name') && json.hasOwnProperty('state')){
+                    var obj = new Object();
+                    let unix_timestamp = json.connected_at
+                    var date = new Date(unix_timestamp);
+                    var connected_at = dateformat(date, "dddd, mmmm dS, yyyy, h:MM:ss TT");
+                    obj.name = json.name;
+                    obj.status = json.state;
+                    obj.client_properties = json.client_properties.platform 
+                    + '<br>' + json.client_properties.product
+                    + '<br>' + json.client_properties.version;
+                    obj.connected_at = connected_at;
+                    res.json(obj);
+                    res.end();
+                } else {
+                    var obj = new Object();
+                    obj.name = req.query.name;
+                    obj.status = "Error";
+                    res.json(obj);
+                    res.end();
+                }
+            });
+        }).on('error', (e) => {
+            console.error(e);
+        }).end();
+    }
+);
+
+router.get('/api/deletesparkleconnection',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) { 
+        console.log( '/api/connections/' + encodeURIComponent(req.query.name));
+        https.request({ host: 'a7430add-136c-4e6f-9c51-e277a6e2e775.bkvfvtld0lmh0umkfi70.databases.appdomain.cloud', 
+            port: 32120,
+            path: '/api/connections/' + encodeURIComponent(req.query.name),
+            method: 'DELETE',
+            rejectUnauthorized: false,
+            requestCert: true,
+            agent: false,
+            auth:'admin:' + connectionSecret}, (response) => {
+            response.on("close", () => {
+                res.send("ok")
+            });
+            response.on("end", () => {
+            });
+            response.on("readable", () => {
+            });
+        }).on('error', (e) => {
+            console.error(e);
+        }).end();
+    }
 );
 
 router.get('/api/getsparklepipelinestatus',
@@ -1002,4 +1135,5 @@ router.get('/api/getgradelist',
     }
 );
 
+createsparkleconnection();
 module.exports = router;

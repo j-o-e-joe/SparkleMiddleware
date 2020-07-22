@@ -52,6 +52,16 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-md-5">
+                            <h3 class="display-4">Sparkle Pipeline Connections</h3>
+                            <table class="table" id="sparkleconnections"></table>
+                            <div><img id="connectionimg" style="padding-right: 8px;" width="34" height="26" src="loading.gif" alt="loading..." /><input type="button" class="create-sparkleconnection" value="New Connection"><br><br><br><br></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
                             <h3 class="display-4">Transporter Upload</h3>
                             <table class="table">
                                 <tbody>
@@ -187,6 +197,25 @@
             <script>
                 const transporterurl = "http://localhost:35200";
 
+                function get_sparkle_connections() {
+                  $("#sparkleconnections").empty();
+                  $.get("/api/getsparkleconnections", function(data, status) {
+                        var obj = data;
+                        var rows = [];
+                        rows.push("<tr><th></th><th></th><th>Name</th><th>State</th><th>Time Started</th><th>Client Properties</th>" );  
+                        $.each(obj.rows, function(index, object) {
+                            rows.push( "<tr><td><input type=\"button\" class=\"check-sparkleconnection\" id=\"" + object.name +  "\" value=\"Check Connection\">"
+                                                    + "</td><td><input type=\"button\" class=\"delete-sparkleconnection\" id=\"" + object.name +  "\" value=\"Delete Connection\">"
+                                                    + "</td><td>" + object.name.split(' -> ')[0]
+                                                    + "</td><td id=\"" + object.name.split(' -> ')[0] + "\">" + object.status
+                                                    + "</td><td>" + object.connected_at
+                                                    + "</td><td>" + object.client_properties
+								                    + "</td></tr>");
+                        });
+                        $("#sparkleconnections").append(rows.join(""));
+                    });
+                }
+                
                 function get_recent_cisgo_uploads() {
                   $("#recentcisgouploads").empty();
                   $.get("/api/getrecentcisgouploads", function(data, status) {
@@ -204,7 +233,7 @@
                         $("#recentcisgouploads").append(rows.join(""));
                     });
                 }
-
+                
                 function get_cisgo_items(controlnumber) {
                   $("#cisgoitems").empty();
                   $.get("/api/getcisgoitems?controlnumber=" + controlnumber, function(data, status) {
@@ -434,8 +463,14 @@
                     .then((resp) => {
                         $("#user").text(resp.user.name);
                     });
+                    
+                    $.get("/api/startconnection")
+                    .then((resp) => {
+                    });
+
                     $("#loadingimg").hide();
                     $("#trainingimg").hide();
+                    $("#connectionimg").hide();
                     
                     var $th = $('.tableFixHead').find('thead th')
                     $('.tableFixHead').on('scroll', function() {
@@ -452,6 +487,31 @@
                         get_grade_items(filterbytext)
                         get_report_items(filterbytext)
                     }, false);
+
+                    
+                    $(document).on('click', "input.create-sparkleconnection", function() {
+                        $("#connectionimg").show();
+                        $.get("/api/createsparkleconnection", function(data, status) {
+                            setTimeout(function() {
+                                get_sparkle_connections();
+                                $("#connectionimg").hide();
+                            }, 4000); // wait a couple seconds for the connection
+                        })
+                    });
+
+                    $(document).on('click', "input.delete-sparkleconnection", function() {
+                        $.get("/api/deletesparkleconnection?name="+this.id, function(data, status) {
+                            get_sparkle_connections();
+                        })
+                    });
+
+                    $(document).on('click', "input.check-sparkleconnection", function() {
+                        $.get("/api/checksparkleconnection?name="+this.id, function(data, status) {
+                            var name = data.name.split(' -> ')[0]
+                            var element = document.getElementById(name);
+                            element.innerHTML = data.status
+                        })
+                    });
 
                     $(document).on('click', "input.reprocess-cisgo-item", function () {
                         $.get("/api/reprocess-cisgo-item?id="+this.id, function(data, status) {
@@ -496,6 +556,7 @@
                     
                     $("#startdate").datepicker();
                     $("#enddate").datepicker();
+                    get_sparkle_connections();
                     get_transporter_status();
                     get_recent_cisgo_uploads();
                     getsparklelogs();
