@@ -420,8 +420,8 @@ router.get('/api/getsparkleconnections',
         session: false
     }),
     function(req, res) { 
-        https.request({ host: 'a7430add-136c-4e6f-9c51-e277a6e2e775.bkvfvtld0lmh0umkfi70.databases.appdomain.cloud', 
-            port: 32120,
+        https.request({ host: 'e18f9fed-4bee-492a-a4c9-1cdf2835f51b.bn2a0fgd0tu045vmv2i0.databases.appdomain.cloud', 
+            port: 31264,
             path: '/api/connections',
             method: 'GET',
             rejectUnauthorized: false,
@@ -460,8 +460,8 @@ router.get('/api/checksparkleconnection',
         session: false
     }),
     function(req, res) { 
-        https.request({ host: 'a7430add-136c-4e6f-9c51-e277a6e2e775.bkvfvtld0lmh0umkfi70.databases.appdomain.cloud', 
-            port: 32120,
+        https.request({ host: 'e18f9fed-4bee-492a-a4c9-1cdf2835f51b.bn2a0fgd0tu045vmv2i0.databases.appdomain.cloud', 
+            port: 31264,
             path: '/api/connections/' + encodeURIComponent(req.query.name),
             method: 'GET',
             rejectUnauthorized: false,
@@ -503,8 +503,8 @@ router.get('/api/deletesparkleconnection',
     }),
     function(req, res) { 
         console.log( '/api/connections/' + encodeURIComponent(req.query.name));
-        https.request({ host: 'a7430add-136c-4e6f-9c51-e277a6e2e775.bkvfvtld0lmh0umkfi70.databases.appdomain.cloud', 
-            port: 32120,
+        https.request({ host: 'e18f9fed-4bee-492a-a4c9-1cdf2835f51b.bn2a0fgd0tu045vmv2i0.databases.appdomain.cloud', 
+            port: 31264,
             path: '/api/connections/' + encodeURIComponent(req.query.name),
             method: 'DELETE',
             rejectUnauthorized: false,
