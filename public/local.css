@@ -1,6 +1,6 @@
-body { background-color:#F4F4F4; }
-main { background-color:#F4F4F4; }
-.jumbotron { background-color:#F4F4F4 !important; }
+body { background-color:#FFFFFF; }
+main { background-color:#FFFFFF; }
+.jumbotron { background-color:#FFFFFF !important; }
 .tableFixHead { overflow-y: auto; height: 400px; }
 
 table  { border-collapse: collapse; }
