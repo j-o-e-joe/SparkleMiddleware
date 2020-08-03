@@ -131,5 +131,15 @@ spec:
                 secretKeyRef:
                   name: deployment-secret
                   key: RABBITMQ_CERTIFICATE_BASE64
+            - name: RABBITMQ_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: RABBITMQ_PORT
         nodeSelector:
           node: 10.220.196.207

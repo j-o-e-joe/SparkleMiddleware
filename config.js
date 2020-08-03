@@ -147,6 +147,20 @@ module.exports = {
             }
         }
     },
+    getRabbitMQHOST: function () {
+        if (process.env.RABBITMQ_HOST) {
+            return process.env.RABBITMQ_HOST;
+        } else { 
+            "locahost"
+        }
+    },
+    getRabbitMQPORT: function () {
+        if (process.env.RABBITMQ_PORT) {
+            return process.env.RABBITMQ_PORT;
+        } else { 
+            "8080"
+        }
+    },
     getSessionSecret: function (jsonData) {
         if (process.env.SECRET_KEY) {
             return process.env.SECRET_KEY;

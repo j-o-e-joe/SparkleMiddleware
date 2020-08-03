@@ -27,6 +27,8 @@ var router = express.Router();
 
 let connectionString = config.getRabbitMQConnection();
 let connectionSecret = config.getSessionSecret();
+let rabbithost = config.getRabbitMQHOST();
+let rabbitport = config.getRabbitMQPORT();
 let certificateBase64 = config.getRabbitMQCertificateBase64();
 let caCert = Buffer.from(certificateBase64, 'base64');
 
@@ -420,8 +422,8 @@ router.get('/api/getsparkleconnections',
         session: false
     }),
     function(req, res) { 
-        https.request({ host: 'e18f9fed-4bee-492a-a4c9-1cdf2835f51b.bn2a0fgd0tu045vmv2i0.databases.appdomain.cloud', 
-            port: 31264,
+        https.request({ host: rabbithost, 
+            port: rabbitport,
             path: '/api/connections',
             method: 'GET',
             rejectUnauthorized: false,
@@ -460,8 +462,8 @@ router.get('/api/checksparkleconnection',
         session: false
     }),
     function(req, res) { 
-        https.request({ host: 'e18f9fed-4bee-492a-a4c9-1cdf2835f51b.bn2a0fgd0tu045vmv2i0.databases.appdomain.cloud', 
-            port: 31264,
+        https.request({ host: rabbithost, 
+            port: rabbitport,
             path: '/api/connections/' + encodeURIComponent(req.query.name),
             method: 'GET',
             rejectUnauthorized: false,
@@ -503,8 +505,8 @@ router.get('/api/deletesparkleconnection',
     }),
     function(req, res) { 
         console.log( '/api/connections/' + encodeURIComponent(req.query.name));
-        https.request({ host: 'e18f9fed-4bee-492a-a4c9-1cdf2835f51b.bn2a0fgd0tu045vmv2i0.databases.appdomain.cloud', 
-            port: 31264,
+        https.request({ host: rabbithost, 
+            port: rabbitport,
             path: '/api/connections/' + encodeURIComponent(req.query.name),
             method: 'DELETE',
             rejectUnauthorized: false,
