@@ -115,6 +115,36 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-md-5">
+                            <h3 class="display-4">Grade List</h3>
+                            <form action="/api/getgradelist" id="gradelistform" >
+                                <table class="table">
+                                    <tbody>
+                                    <tr>
+                                        <td colspan="2">
+                                            Get a list of grades and other data for a date range.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="1"><p class="font-weight-bold">Start Date</p></td><td colspan="3">
+                                            <input type="text" id="startdate" name="startdate"> 
+                                        </td>
+                                        <td colSpan="1"><p class="font-weight-bold">End Date</p></td><td colspan="3">
+                                            <input type="text" id="enddate" name="enddate"> 
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2"><input type="submit" id="base-training-set" value="Submit"/></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-5">
                             <h3 class="display-4">Search</h3>
                             <div class="control-group" style="height:100px;">
                                 <p class="font-weight-bold">Search By Control Number</p>

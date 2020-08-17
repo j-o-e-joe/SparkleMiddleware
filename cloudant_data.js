@@ -357,7 +357,7 @@ module.exports = {
  
             var sdate = new Date(startdate);
             var edate = new Date(enddate);
-            db.view('all', 'gradeitems', {include_docs: false},
+            db.view('all', 'gradeitems', {include_docs: false, 'descending': true},
             function (err, result) {
                 if (err) {
                     console.log(err);
@@ -368,6 +368,7 @@ module.exports = {
                          var ctrlnumber = result.rows[i].value.controlnumber
                          var grade_ts = result.rows[i].value.gradetimestap
                          var trainingid = result.rows[i].value.trainingid
+                         var user = result.rows[i].value.user
                          var gia_grade = result.rows[i].value.gia_grade
                          var cont_grade = result.rows[i].value.continuous_grade
                          var a_score = result.rows[i].value.model_a_score
@@ -378,12 +379,12 @@ module.exports = {
                             var dnew = new Date(grade_ts)
                             var dexisting = new Date(map.get(ctrlnumber)[0])
                              if (dnew > dexisting) {
-                                map.set(ctrlnumber, [grade_ts, trainingid, gia_grade, cont_grade, a_score, b_score, c_score])
+                                map.set(ctrlnumber, [grade_ts, trainingid, user, gia_grade, cont_grade, a_score, b_score, c_score])
                             }
                         } else {
                             var cdate = new Date(grade_ts)
                             if (cdate >= sdate && cdate <= edate) {
-                                map.set(ctrlnumber, [grade_ts, trainingid, gia_grade, cont_grade, a_score, b_score, c_score])
+                                map.set(ctrlnumber, [grade_ts, trainingid, user, gia_grade, cont_grade, a_score, b_score, c_score])
                             }
                         }
                     }
