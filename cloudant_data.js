@@ -363,7 +363,7 @@ module.exports = {
                     console.log(err);
                     reject(err)
                 } else {
-                    var map = new Map()
+                    var rows = []
                     for (var i = 0; i < result.rows.length; i++) {
                          var ctrlnumber = result.rows[i].value.controlnumber
                          var grade_ts = result.rows[i].value.gradetimestap
@@ -374,21 +374,9 @@ module.exports = {
                          var a_score = result.rows[i].value.model_a_score
                          var b_score = result.rows[i].value.model_b_score
                          var c_score =  result.rows[i].value.model_c_score
-
-                        if (map.has(ctrlnumber)) {
-                            var dnew = new Date(grade_ts)
-                            var dexisting = new Date(map.get(ctrlnumber)[0])
-                             if (dnew > dexisting) {
-                                map.set(ctrlnumber, [grade_ts, trainingid, user, gia_grade, cont_grade, a_score, b_score, c_score])
-                            }
-                        } else {
-                            var cdate = new Date(grade_ts)
-                            if (cdate >= sdate && cdate <= edate) {
-                                map.set(ctrlnumber, [grade_ts, trainingid, user, gia_grade, cont_grade, a_score, b_score, c_score])
-                            }
-                        }
+                         rows.push([ctrlnumber, grade_ts, trainingid, user, gia_grade, cont_grade, a_score, b_score, c_score])
                     }
-                    resolve(map);
+                    resolve(rows);
                 }
             });  
         });

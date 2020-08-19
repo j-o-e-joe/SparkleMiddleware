@@ -1103,22 +1103,13 @@ router.get('/api/getgradelist',
     function(req, res) {
         var startdate = req.query.startdate
         var enddate = req.query.enddate;
-        cloudant_data.getGradeListCloudantItems(db, startdate, enddate).then((map) => {
+        cloudant_data.getGradeListCloudantItems(db, startdate, enddate).then((rows) => {
 
             var crows = []
             crows.push(["Control Number", "Grade Timestamp", "Training ID", "User", "GIA Grade", "Continuous Score", "C Score", "I Score", "F Score"])
-            for (var [key, value] of map) {
-                var gradeitem = []
-                gradeitem.push(key);
-                gradeitem.push(value[0]);
-                gradeitem.push(value[1]);
-                gradeitem.push(value[2]);
-                gradeitem.push(value[3]);
-                gradeitem.push(value[4]);
-                gradeitem.push(value[5]);
-                gradeitem.push(value[6]);
-                gradeitem.push(value[7]);
-                crows.push(gradeitem);    
+           
+            for (var i = 0; i < rows.length; i++) {
+                crows.push(rows[i]);    
             }
 
             var ws_name = "Sheet1";
