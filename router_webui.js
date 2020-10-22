@@ -337,20 +337,6 @@ router.post('/api/runinclusiontraining',
    
 );
 
-// router.get('/api/createsparkleconnection',
-//     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-//         session: false
-//     }),
-//     function(req, res) {        
-//         createsparkleconnection().then(() => {
-//             res.send("ok");
-//         }).catch((e)=>{
-//             res.write(`ERROR: ${e.code} - ${e.message}\n`);
-//             res.end();
-//         });
-//     }
-// );
-
 router.get('/api/getsparkleconnections',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
         session: false
@@ -390,75 +376,6 @@ router.get('/api/getsparkleconnections',
         }).end();
     }
 );
-
-// router.get('/api/checksparkleconnection',
-//     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-//         session: false
-//     }),
-//     function(req, res) { 
-//         https.request({ host: rabbithost, 
-//             port: rabbitport,
-//             path: '/api/connections/' + encodeURIComponent(req.query.name),
-//             method: 'GET',
-//             rejectUnauthorized: false,
-//             requestCert: true,
-//             agent: false,
-//             auth:'admin:' + connectionSecret}, (response) => {
-//             response.on('data', (d) => {
-//                 const json = JSON.parse(d);
-//                 if(json.hasOwnProperty('name') && json.hasOwnProperty('state')){
-//                     var obj = new Object();
-//                     let unix_timestamp = json.connected_at
-//                     var date = new Date(unix_timestamp);
-//                     var connected_at = dateformat(date, "dddd, mmmm dS, yyyy, h:MM:ss TT");
-//                     obj.name = json.name;
-//                     obj.status = json.state;
-//                     obj.client_properties = json.client_properties.platform 
-//                     + '<br>' + json.client_properties.product
-//                     + '<br>' + json.client_properties.version;
-//                     obj.connected_at = connected_at;
-//                     res.json(obj);
-//                     res.end();
-//                 } else {
-//                     var obj = new Object();
-//                     obj.name = req.query.name;
-//                     obj.status = "Error";
-//                     res.json(obj);
-//                     res.end();
-//                 }
-//             });
-//         }).on('error', (e) => {
-//             console.error(e);
-//         }).end();
-//     }
-// );
-
-// router.get('/api/deletesparkleconnection',
-//     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-//         session: false
-//     }),
-//     function(req, res) { 
-//         console.log( '/api/connections/' + encodeURIComponent(req.query.name));
-//         https.request({ host: rabbithost, 
-//             port: rabbitport,
-//             path: '/api/connections/' + encodeURIComponent(req.query.name),
-//             method: 'DELETE',
-//             rejectUnauthorized: false,
-//             requestCert: true,
-//             agent: false,
-//             auth:'admin:' + connectionSecret}, (response) => {
-//             response.on("close", () => {
-//                 res.send("ok")
-//             });
-//             response.on("end", () => {
-//             });
-//             response.on("readable", () => {
-//             });
-//         }).on('error', (e) => {
-//             console.error(e);
-//         }).end();
-//     }
-// );
 
 router.get('/api/getsparklepipelinestatus',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
