@@ -231,15 +231,13 @@
                   $.get("/api/getsparkleconnections", function(data, status) {
                         var obj = data;
                         var rows = [];
-                        rows.push("<tr><th></th><th></th><th>Name</th><th>State</th><th>Time Started</th><th>Client Properties</th>" );  
+                        rows.push("<tr><th>Name</th><th>State</th><th>Time Started</th><th>Client Properties</th>" );  
                         $.each(obj.rows, function(index, object) {
-                            rows.push( "<tr><td><input type=\"button\" class=\"check-sparkleconnection\" id=\"" + object.name +  "\" value=\"Check Connection\">"
-                                                    + "</td><td><input type=\"button\" class=\"delete-sparkleconnection\" id=\"" + object.name +  "\" value=\"Delete Connection\">"
-                                                    + "</td><td>" + object.name.split(' -> ')[0]
-                                                    + "</td><td id=\"" + object.name.split(' -> ')[0] + "\">" + object.status
-                                                    + "</td><td>" + object.connected_at
-                                                    + "</td><td>" + object.client_properties
-								                    + "</td></tr>");
+                            rows.push( "<tr><td>" + object.name.split(' -> ')[0]
+                                                + "</td><td id=\"" + object.name.split(' -> ')[0] + "\">" + object.status
+                                                + "</td><td>" + object.connected_at
+                                                + "</td><td>" + object.client_properties
+                                                + "</td></tr>");
                         });
                         $("#sparkleconnections").append(rows.join(""));
                     });

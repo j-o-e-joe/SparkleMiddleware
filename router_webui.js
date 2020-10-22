@@ -5,12 +5,11 @@ const AdmZip = require('adm-zip');
 const xlsx = require('xlsx');
 const s3_data = require('./s3_data');
 const cloudant_data = require('./cloudant_data');
-const config = require('./config');
-const fs = require('fs');
+const rabbitmq_messages = require('./rabbitmq_messages');
 const path = require('path');
-const amqp = require("amqplib");
 const dateformat = require('dateformat');
 const https = require('https');
+const config = require('./config');
 
 const storage = multer.memoryStorage()
 const upload = multer({ storage });
@@ -23,62 +22,13 @@ const SPARKLETRAININGCLARITY = process.env.SPARKLETRAININGCLARITY
 const SPARKLETRAININGINCLUSIONS = process.env.SPARKLETRAININGINCLUSIONS
 
 var db = cloudant_data.initDBConnection();
+rabbitmq_messages.initAMQPConnection();
 var router = express.Router();
 
-let connectionString = config.getRabbitMQConnection();
 let connectionSecret = config.getSessionSecret();
 let rabbithost = config.getRabbitMQHOST();
 let rabbitport = config.getRabbitMQPORT();
-let certificateBase64 = config.getRabbitMQCertificateBase64();
-let caCert = Buffer.from(certificateBase64, 'base64');
 
-var open =  null;
-
-var sparklepipelinelogs = []
-
-function createsparkleconnection() {
-    return new Promise((resolve, reject)=>{
-        open = amqp.connect(connectionString, { ca: [caCert] });
-        open
-        .then(conn => {
-            return conn.createChannel();
-        })
-        .then(ch => {
-            return ch.assertQueue("sparkle_fitting_pipeline", { autoDelete: false, durable: false });
-        })
-        .catch(err => {
-            reject(err);
-        });
-
-        open.then(conn => {
-            return conn.createChannel();
-        })
-        .then(ch => {
-            var exchange = 'sparkle_pipeline_logs';
-            return ch
-            .assertExchange(exchange, "fanout", { durable: false })
-            .then(() => {
-                return ch.assertQueue('', { exclusive: true });
-            })
-            .then(q => {
-                sparklepipelinelogs = []
-                ch.bindQueue(q.queue, exchange, '');
-                ch.consume(q.queue, function(msg) {
-                    if(msg.content) {
-                        sparklepipelinelogs.push(msg.content.toString());
-                    }
-                }, {
-                    noAck: true
-                });
-                resolve()
-            });
-        })
-        .catch(err => {
-            console.log(err);
-            reject(err);
-        });
-    });
-}
 
 function additemtodatastore(bucketname, fileitem, cisgotimestamp, controlnumber) {
     return new Promise((resolve, reject)=>{
@@ -104,41 +54,19 @@ function removeitemfromdatastore(bucketname, fileitem, cisgotimestamp, controlnu
     })
 }
 
-function runsparkleprocessing(controlnumber, cisgotimestamp) {
-    return new Promise((resolve, reject)=>{
-        open.then(conn => {
-            return conn.createChannel();
-        })
-        .then(ch => {
-            let message = "{\"controlnumber\":\"" + controlnumber + "\", \"cisgotimestamp\":\"" + cisgotimestamp + "\"}"
-            ch.publish('', 'sparkle_fitting_pipeline', Buffer(message));
-            resolve(message);
-        })
-        .catch(err => {
-          reject(err);
-        });
-    });
-}
-
 function runtraining(trainingitem, trainingtype) {
-    return new Promise((resolve, reject)=>{      
-        let open = amqp.connect(connectionString, { ca: [caCert] });
-        open.then(conn => {
-            return conn.createChannel();
-        })
-        .then(ch => {
-            let message = "{\"trainingid\" : \"" + trainingitem.trainingtimestamp 
+    return new Promise((resolve, reject)=>{     
+        let message = "{\"trainingid\" : \"" + trainingitem.trainingtimestamp 
             + "\", \"trianingtype\" : \"" + trainingtype
             + "\", \"epocs\" : \"" + trainingitem.epocs
             + "\", \"spe\" : \"" + trainingitem.spe + "\"}"
-            ch.assertQueue("sparkle_training", { autoDelete: false, durable: false });
-            ch.publish('', 'sparkle_training', Buffer(message));
+            
+        rabbitmq_messages.publish("sparkle_training", Buffer.from(message)).then(() => {
             resolve(message);
+        }).catch((e)=>{
+            reject(e);
         })
-        .catch(err => {
-            console.log("Error running training: " + err)
-            reject(err);
-        });
+        
     });
 }
 
@@ -184,10 +112,12 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
                 cloudant_data.addItemToCloudantDB(db, asc_item).then(()=>{    
                 }).catch((e)=>{ 
                     console.log(e)
-                    //reject(e)
                 })
             }).catch((e)=>{
+                console.log("failed to write ASC to data store")
                 console.log(e)
+                reject(e)
+                return
             });
         }
       
@@ -203,8 +133,10 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         a_crown_item.sparkleprocessed = false;
         cloudant_data.addItemToCloudantDB(db, a_crown_item).then(()=>{    
         }).catch((e)=>{ 
+            console.log("failed to write A Crown to data store")
             console.log(e)
-            //reject(e)
+            reject(e)
+            return
         })
         
         await sleep(1000);
@@ -219,8 +151,10 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         b_high_item.sparkleprocessed = false;
         cloudant_data.addItemToCloudantDB(db, b_high_item).then(()=>{
         }).catch((e)=>{ 
+            console.log("failed to write B High to data store")
             console.log(e)
-            //reject(e)
+            reject(e)
+            return
         })
         
         await sleep(1000);
@@ -233,19 +167,19 @@ async function processrequests(filemap, controlnumber, cisgotimestamp, cisgouser
         b_low_item.protocol = b_crown_low.protocol;
         b_low_item.filepath = cisgotimestamp + "/" + b_crown_low.protocol + "/" + b_crown_low.filename;
         b_low_item.sparkleprocessed = false;
-        cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=>{
-            runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
-            resolve(controlnumber)
-        }).catch((e)=>{ 
+        cloudant_data.addItemToCloudantDB(db, b_low_item).then(()=> {
+            let message = "{\"controlnumber\":\"" + controlnumber + "\", \"cisgotimestamp\":\"" + cisgotimestamp + "\"}"
+            rabbitmq_messages.publish("sparkle_fitting_pipeline", Buffer.from(message)).then(() => {
+                resolve(message);
+            }).catch((e)=>{
+                reject(e);
+            })
+        }).catch((e)=>{
+            console.log("failed to write B Low to data store")
             console.log(e)
-            resolve(controlnumber)
-            //reject(e)
-        })
-        
-    }).catch((e)=>{
-        //reject(e)
-        console.log(e)
-    });
+            reject(e)
+            return
+        });
 
     });
 }
@@ -403,19 +337,19 @@ router.post('/api/runinclusiontraining',
    
 );
 
-router.get('/api/createsparkleconnection',
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) {        
-        createsparkleconnection().then(() => {
-            res.send("ok");
-        }).catch((e)=>{
-            res.write(`ERROR: ${e.code} - ${e.message}\n`);
-            res.end();
-        });
-    }
-);
+// router.get('/api/createsparkleconnection',
+//     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+//         session: false
+//     }),
+//     function(req, res) {        
+//         createsparkleconnection().then(() => {
+//             res.send("ok");
+//         }).catch((e)=>{
+//             res.write(`ERROR: ${e.code} - ${e.message}\n`);
+//             res.end();
+//         });
+//     }
+// );
 
 router.get('/api/getsparkleconnections',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
@@ -457,74 +391,74 @@ router.get('/api/getsparkleconnections',
     }
 );
 
-router.get('/api/checksparkleconnection',
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) { 
-        https.request({ host: rabbithost, 
-            port: rabbitport,
-            path: '/api/connections/' + encodeURIComponent(req.query.name),
-            method: 'GET',
-            rejectUnauthorized: false,
-            requestCert: true,
-            agent: false,
-            auth:'admin:' + connectionSecret}, (response) => {
-            response.on('data', (d) => {
-                const json = JSON.parse(d);
-                if(json.hasOwnProperty('name') && json.hasOwnProperty('state')){
-                    var obj = new Object();
-                    let unix_timestamp = json.connected_at
-                    var date = new Date(unix_timestamp);
-                    var connected_at = dateformat(date, "dddd, mmmm dS, yyyy, h:MM:ss TT");
-                    obj.name = json.name;
-                    obj.status = json.state;
-                    obj.client_properties = json.client_properties.platform 
-                    + '<br>' + json.client_properties.product
-                    + '<br>' + json.client_properties.version;
-                    obj.connected_at = connected_at;
-                    res.json(obj);
-                    res.end();
-                } else {
-                    var obj = new Object();
-                    obj.name = req.query.name;
-                    obj.status = "Error";
-                    res.json(obj);
-                    res.end();
-                }
-            });
-        }).on('error', (e) => {
-            console.error(e);
-        }).end();
-    }
-);
+// router.get('/api/checksparkleconnection',
+//     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+//         session: false
+//     }),
+//     function(req, res) { 
+//         https.request({ host: rabbithost, 
+//             port: rabbitport,
+//             path: '/api/connections/' + encodeURIComponent(req.query.name),
+//             method: 'GET',
+//             rejectUnauthorized: false,
+//             requestCert: true,
+//             agent: false,
+//             auth:'admin:' + connectionSecret}, (response) => {
+//             response.on('data', (d) => {
+//                 const json = JSON.parse(d);
+//                 if(json.hasOwnProperty('name') && json.hasOwnProperty('state')){
+//                     var obj = new Object();
+//                     let unix_timestamp = json.connected_at
+//                     var date = new Date(unix_timestamp);
+//                     var connected_at = dateformat(date, "dddd, mmmm dS, yyyy, h:MM:ss TT");
+//                     obj.name = json.name;
+//                     obj.status = json.state;
+//                     obj.client_properties = json.client_properties.platform 
+//                     + '<br>' + json.client_properties.product
+//                     + '<br>' + json.client_properties.version;
+//                     obj.connected_at = connected_at;
+//                     res.json(obj);
+//                     res.end();
+//                 } else {
+//                     var obj = new Object();
+//                     obj.name = req.query.name;
+//                     obj.status = "Error";
+//                     res.json(obj);
+//                     res.end();
+//                 }
+//             });
+//         }).on('error', (e) => {
+//             console.error(e);
+//         }).end();
+//     }
+// );
 
-router.get('/api/deletesparkleconnection',
-    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
-        session: false
-    }),
-    function(req, res) { 
-        console.log( '/api/connections/' + encodeURIComponent(req.query.name));
-        https.request({ host: rabbithost, 
-            port: rabbitport,
-            path: '/api/connections/' + encodeURIComponent(req.query.name),
-            method: 'DELETE',
-            rejectUnauthorized: false,
-            requestCert: true,
-            agent: false,
-            auth:'admin:' + connectionSecret}, (response) => {
-            response.on("close", () => {
-                res.send("ok")
-            });
-            response.on("end", () => {
-            });
-            response.on("readable", () => {
-            });
-        }).on('error', (e) => {
-            console.error(e);
-        }).end();
-    }
-);
+// router.get('/api/deletesparkleconnection',
+//     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+//         session: false
+//     }),
+//     function(req, res) { 
+//         console.log( '/api/connections/' + encodeURIComponent(req.query.name));
+//         https.request({ host: rabbithost, 
+//             port: rabbitport,
+//             path: '/api/connections/' + encodeURIComponent(req.query.name),
+//             method: 'DELETE',
+//             rejectUnauthorized: false,
+//             requestCert: true,
+//             agent: false,
+//             auth:'admin:' + connectionSecret}, (response) => {
+//             response.on("close", () => {
+//                 res.send("ok")
+//             });
+//             response.on("end", () => {
+//             });
+//             response.on("readable", () => {
+//             });
+//         }).on('error', (e) => {
+//             console.error(e);
+//         }).end();
+//     }
+// );
 
 router.get('/api/getsparklepipelinestatus',
     passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
@@ -532,10 +466,10 @@ router.get('/api/getsparklepipelinestatus',
     }),
     function(req, res) {        
         var item = new Object();
-        item.rows = sparklepipelinelogs
+        item.rows = rabbitmq_messages.getsparklelogs();
         res.json(item);
         res.end();
-        sparklepipelinelogs = []
+        rabbitmq_messages.clearsparklelogs();
     }
 );
 
@@ -869,15 +803,15 @@ router.get('/api/reprocess-cisgo-item',
         var controlnumber = req.query.controlnumber;
         var cisgotimestamp = req.query.cisgotimestamp;
         let message = "{\"controlnumber\":\"" + controlnumber + "\", \"cisgotimestamp\":\"" + cisgotimestamp + "\"}"
-        console.log(message)
-        runsparkleprocessing(controlnumber, cisgotimestamp).then(()=>{
+        rabbitmq_messages.publish("sparkle_fitting_pipeline", Buffer.from(message)).then(() => {
             res.write("success");
             res.end();
-        }).catch((e)=>{ 
-            console.log(e)
-            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+        }).catch((e)=>{
+            res.status(500).send(`${e.code} - ${e.message}\n`);
             res.end();
         })
+        
+       
     }
 );                          
 
@@ -1129,5 +1063,27 @@ router.get('/api/getgradelist',
     }
 );
 
-createsparkleconnection();
+router.get('/api/getcutwiselist',
+    passport.authenticate(WebAppStrategy.STRATEGY_NAME, {
+        session: false
+    }),
+    function(req, res) {
+        cloudant_data.getCutwiseItems(db).then((rows) => {
+            var ws_name = "Sheet1";
+            var ws = xlsx.utils.aoa_to_sheet(rows);
+            var wb = xlsx.utils.book_new();
+            xlsx.utils.book_append_sheet(wb, ws, ws_name);
+            var wbout = xlsx.write(wb, {bookType:'xlsx', bookSST:false, type:'array' });
+            res.setHeader('Content-disposition', 'attachment; filename=test.xlsx');
+            res.writeHead(200, {'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+            res.write(new Buffer.from(wbout), 'binary');
+            res.end();
+           
+        }).catch((e)=>{
+            res.write(`ERROR: ${e.code} - ${e.message}\n`);
+            res.end();
+        })
+    }
+);
+
 module.exports = router;
