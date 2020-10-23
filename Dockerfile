@@ -8,9 +8,9 @@ COPY package*.json ./
 
 USER node
 
-RUN npm install
-
 COPY --chown=node:node . .
+
+RUN npm install
 
 EXPOSE 3000
 
