@@ -29,7 +29,7 @@ spec:
       spec:
         containers:
         - name: sparklemiddleware
-          image: us.icr.io/sparkle-uat/sparklemiddleware:latest
+          image: us.icr.io/sparkle-release/sparklemiddleware:latest
           ports:
             - containerPort: 3000
           env:
