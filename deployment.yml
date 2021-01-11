@@ -34,23 +34,23 @@ spec:
             - containerPort: 3000
           env:
             - name: CISGOIMAGES
-              value: "cisgoimages-uat"
+              value: "cisgoimages-release"
             - name: CUTWISEUPLOADS
-              value: "cutwiseuploads-uat"
+              value: "cutwiseuploads-release"
             - name: HELIUMUPLOADS
-              value: "heliumuploads-uat"
+              value: "heliumuploads-release"
             - name: HELIUMWIREFRAMES
-              value: "heliumwireframes-uat"
+              value: "heliumwireframes-release"
             - name: SPARKLEPLOTS
-              value: "sparkleplots-uat"
+              value: "sparkleplots-release"
             - name: SPARKLETABLEDATA
-              value: "sparkletabledata-uat"
+              value: "sparkletabledata-release"
             - name: SPARKLETRAININGCLARITY
-              value: "sparkletrainingclarity-uat"
+              value: "sparkletrainingclarity-release"
             - name: SPARKLETRAININGINCLUSIONS
-              value: "sparkletraininginclusions-uat"
+              value: "sparkletraininginclusions-release"
             - name: SPARKLETRAININGWIREFRAME
-              value: "sparkletrainingwireframe-uat"
+              value: "sparkletrainingwireframe-release"
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:

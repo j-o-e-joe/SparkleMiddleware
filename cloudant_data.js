@@ -71,6 +71,15 @@ module.exports = {
                         },
                         "cutwiseitems": {
                         "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + CUTWISEUPLOADS + "\") {\n    emit(doc.controlnumber, doc);\n  }\n}"
+                      },
+                      "cisgo_items_for_today": {
+                        "map": "function (doc) {\n  if (doc.controlnumber && doc.bucketname == \"" + CISGOIMAGES + "\") {\n    emit(doc.cisgotimestamp, doc.cisgotimestamp);\n  }\n}"
+                      },
+                      "grade_items_for_today": {
+                        "map": "function (doc) {\n  if (doc.controlnumber && doc.continuous_grade) {\n       emit(doc.cisgotimestamp, doc.cisgotimestamp);\n  }\n}"
+                      },
+                      "cutwisezipitems": {
+                        "map": "function (doc) {\n  if (doc.bucketname == \"cutwisezipuploads\") {\n    emit(doc.bucketname, doc);\n  }\n}"
                         }
                         },
                         "indexes": {
@@ -120,7 +129,11 @@ module.exports = {
                         },
                         "cisgo_by_timestamp": {
                         "analyzer": "standard",
-                        "index": "function (doc) {\n  if (doc.cisgotimestamp && doc.bucketname == \"" + CISGOIMAGES + "\") {\n    index(\"cisgotimestamp\", doc.cisgotimestamp, {store:true});\n  }\n}"
+                        "index": "function (doc) {\n  if (doc.cisgotimestamp) {\n    var ts = Date.parse(doc.cisgotimestamp)\n    index(\"cisgotimestamp\", ts);\n  }\n}"
+                      },
+                      "grade_by_timestamp": {
+                        "analyzer": "standard",
+                        "index": "function (doc) {\n  if (doc.cisgotimestamp && doc.gradetimestap) {\n    var ts = Date.parse(doc.cisgotimestamp)\n    index(\"cisgotimestamp\", ts);\n  }\n}"
                         }
                     }
                 }
