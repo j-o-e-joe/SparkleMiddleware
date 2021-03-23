@@ -1,8 +1,0 @@
-body { background-color:#FFFFFF; }
-main { background-color:#FFFFFF; }
-.jumbotron { background-color:#FFFFFF !important; }
-.tableFixHead { overflow-y: auto; height: 400px; }
-
-table  { border-collapse: collapse; }
-th, td { padding: 8px 16px; }
-th     { background:#eee; }
