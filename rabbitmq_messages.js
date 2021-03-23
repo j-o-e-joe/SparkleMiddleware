@@ -8,7 +8,10 @@ let caCert = Buffer.from(certificateBase64, 'base64');
 var amqpConn = null;
 var pubChannel = null;
 var offlinePubQueue = [];
-var sparklepipelinelogs = []
+var claritytrainingstatus = []
+var inclusiontrainingstatus = []
+var gradingstatus = []
+var fittingstatus = []
 module.exports = {
 
     initAMQPConnection: function() {
@@ -53,19 +56,74 @@ module.exports = {
                 ch.on("close", function() {
                     console.log("[AMQP] channel closed");
                 });
-                ch.assertExchange("sparkle_pipeline_logs", "fanout", { durable: false })
+                ch.assertExchange("sparkle_clarity_training_logs", "fanout", { durable: false })
                 q = ch.assertQueue("", { exclusive: true });
-                ch.bindQueue(q.queue, "sparkle_pipeline_logs", '');
+                ch.bindQueue(q.queue, "sparkle_clarity_training_logs", '');
                 ch.consume(q.queue, function(msg) {
                     if(msg.content) {
-                        sparklepipelinelogs.push(msg.content.toString());
+                        claritytrainingstatus.push(msg.content.toString());
                     }
                 }, { noAck: true});
             });
+
+            amqpConn.createConfirmChannel(function(err, ch) {
+                if (module.exports.closeOnErr(err)) return;
+                ch.on("error", function(err) {
+                    console.error("[AMQP] channel error", err.message);
+                });
+                ch.on("close", function() {
+                    console.log("[AMQP] channel closed");
+                });
+                ch.assertExchange("sparkle_inclusion_training_logs", "fanout", { durable: false })
+                q = ch.assertQueue("", { exclusive: true });
+                ch.bindQueue(q.queue, "sparkle_inclusion_training_logs", '');
+                ch.consume(q.queue, function(msg) {
+                    if(msg.content) {
+                        inclusiontrainingstatus.push(msg.content.toString());
+                    }
+                }, { noAck: true});
+            });
+
+            amqpConn.createConfirmChannel(function(err, ch) {
+                if (module.exports.closeOnErr(err)) return;
+                ch.on("error", function(err) {
+                    console.error("[AMQP] channel error", err.message);
+                });
+                ch.on("close", function() {
+                    console.log("[AMQP] channel closed");
+                });
+                ch.assertExchange("sparkle_grading_logs", "fanout", { durable: false })
+                q = ch.assertQueue("", { exclusive: true });
+                ch.bindQueue(q.queue, "sparkle_grading_logs", '');
+                ch.consume(q.queue, function(msg) {
+                    if(msg.content) {
+                        gradingstatus.push(msg.content.toString());
+                    }
+                }, { noAck: true});
+            });
+
+            amqpConn.createConfirmChannel(function(err, ch) {
+                if (module.exports.closeOnErr(err)) return;
+                ch.on("error", function(err) {
+                    console.error("[AMQP] channel error", err.message);
+                });
+                ch.on("close", function() {
+                    console.log("[AMQP] channel closed");
+                });
+                ch.assertExchange("sparkle_fitting_logs", "fanout", { durable: false })
+                q = ch.assertQueue("", { exclusive: true });
+                ch.bindQueue(q.queue, "sparkle_fitting_logs", '');
+                ch.consume(q.queue, function(msg) {
+                    if(msg.content) {
+                        fittingstatus.push(msg.content.toString());
+                    }
+                }, { noAck: true});
+            });
+
         });
     }, 
     publish: function(q, content) {
-        console.log("queue: " + q + "content: " + content);
+        console.log("queue: " + q + " content: " + content);
         return new Promise((resolve, reject)=>{
             try {
                 pubChannel.assertQueue(q, { autoDelete: false, durable: false });
@@ -85,10 +143,30 @@ module.exports = {
         amqpConn.close();
         return true;
     },
-    getsparklelogs: function() {
-        return sparklepipelinelogs
+    getclaritytrainingstatus: function() {
+        return claritytrainingstatus
     },
-    clearsparklelogs: function() {
-        sparklepipelinelogs = []
+    clearclaritytrainingstatus: function() {
+        claritytrainingstatus = []
+    },
+    getinclusiontrainingstatus: function() {
+        return inclusiontrainingstatus
+    },
+    clearinclusiontrainingstatus: function() {
+        inclusiontrainingstatus = []
+    },
+    getgradingstatus: function() {
+        return gradingstatus
+    },
+    cleargradingstatus: function() {
+        gradingstatus = []
+    },
+    getfittingstatus: function() {
+        return fittingstatus
+    },
+    clearfittingstatus: function() {
+        fittingstatus = []
     }
+    
+    
 };

@@ -7,5 +7,5 @@ applications:
    - sparkle_pipeline_appid
    - sparkle_pipeline_cloudant
    - sparkle_pipeline_cos
-   - sparkle_pipeline_messages
+   - sparkle_dev_rabbitmq
     

@@ -1,177 +1,121 @@
-const fs = require('fs');
-
 module.exports = {
-    getDBCredentialsUrl: function () {
+    getCloudantAccountUrl: function () {
         if (process.env.CLOUDANT_ACCOUNT_URL) {
             return process.env.CLOUDANT_ACCOUNT_URL;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/cloudantNoSQLDB/i)) {
-                    return vcapServices[vcapService][0].credentials.url;
-                }
-            }
+            return ''
+        }
+    },
+    getCloudantAPIKey: function () {
+        if (process.env.CLOUDANT_API_KEY) {
+            return process.env.CLOUDANT_API_KEY;
+        } else { 
+            return ''
         }
     },
     getCosServiceInstanceID: function () {
         if (process.env.COS_SERVICEINSTANCE_ID) {
             return process.env.COS_SERVICEINSTANCE_ID;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/cloud-object-storage/i)) {
-                    return vcapServices[vcapService][0].credentials.resource_instance_id;
-                }
-            }
+            return ''
         }
     },
     getCosAPIKeyID: function () {
-
         if (process.env.COS_API_KEY_ID) {
             return process.env.COS_API_KEY_ID;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/cloud-object-storage/i)) {
-                    return vcapServices[vcapService][0].credentials.apikey;
-                }
-            }
+            return ''
         }
     },
     getCosAuthEndpoint: function () {
-
         if (process.env.COS_AUTH_ENDPOINT) {
             return process.env.COS_AUTH_ENDPOINT;
         } else { 
-            return 'https://iam.ng.bluemix.net/oidc/token';
+            return ''
         }
     },
     getCosEndpoint: function () {
         if (process.env.COS_ENDPOINT) {
             return process.env.COS_ENDPOINT;
         } else { 
-            return 'https://s3.us-south.cloud-object-storage.appdomain.cloud';
+            return ''
         }
     },
     getAppIDTenantID: function () {
         if (process.env.APPID_TENANTID) {
             return process.env.APPID_TENANTID;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/appid/i)) {
-                    return vcapServices[vcapService][0].credentials.tenantId;
-                }
-            }
+            return ''
         }
     },
     getAppIDClientID: function () {
         if (process.env.APPID_CLIENTID) {
             return process.env.APPID_CLIENTID;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/appid/i)) {
-                    return vcapServices[vcapService][0].credentials.clientId;
-                }
-            }
+            return ''
         }
     },
     getAppIDSecret: function () {
         if (process.env.APPID_SECRET) {
             return process.env.APPID_SECRET;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/appid/i)) {
-                    return vcapServices[vcapService][0].credentials.secret;
-                }
-            }
+            return ''
         }
     },
     getAppIDOAuthServerUrl: function () {
         if (process.env.APPID_OAUTHSERVERURL) {
             return process.env.APPID_OAUTHSERVERURL;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/appid/i)) {
-                    return vcapServices[vcapService][0].credentials.oauthServerUrl;
-                }
-            }
+            return ''
+        }
+    },
+    getAppIDRedirectUrl: function () {
+        if (process.env.APPID_REDIRECTURL) {
+            return process.env.APPID_REDIRECTURL;
+        } else {
+            return ''
         }
     },
     getAppIDCutwiseOAuthServerUrl: function () {
         if (process.env.APPID_CUTWISE_OAUTHSERVERURL) {
             return process.env.APPID_CUTWISE_OAUTHSERVERURL;
-        } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/appid/i)) {
-                    return vcapServices[vcapService][0].credentials.oauthServerUrl;
-                }
-            }
+        } else {
+            return ''
         }
     },
     getRabbitMQConnection: function () {
         if (process.env.RABBITMQ_CONNECTION) {
             return process.env.RABBITMQ_CONNECTION;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/messages-for-rabbitmq/i)) {
-                    return vcapServices[vcapService][0].credentials.connection.amqps.composed[0];
-                }
-            }
+            return ''
         }
     },
     getRabbitMQCertificateBase64: function () {
         if (process.env.RABBITMQ_CERTIFICATE_BASE64) {
             return process.env.RABBITMQ_CERTIFICATE_BASE64;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/messages-for-rabbitmq/i)) {
-                    return vcapServices[vcapService][0].credentials.connection.amqps.certificate.certificate_base64;
-                }
-            }
+            return ''
         }
     },
     getRabbitMQHOST: function () {
         if (process.env.RABBITMQ_HOST) {
             return process.env.RABBITMQ_HOST;
         } else { 
-            "locahost"
+            return ''
         }
     },
     getRabbitMQPORT: function () {
         if (process.env.RABBITMQ_PORT) {
             return process.env.RABBITMQ_PORT;
         } else { 
-            "8080"
+            return ''
         }
     },
-    getSessionSecret: function (jsonData) {
+    getSessionSecret: function () {
         if (process.env.SECRET_KEY) {
             return process.env.SECRET_KEY;
         } else { 
-            var jsonData = fs.readFileSync("vcap-local-server.json", "utf-8");
-            var vcapServices = JSON.parse(jsonData);
-            for (var vcapService in vcapServices) {
-                if (vcapService.match(/session/i)) {
-                    return vcapServices[vcapService][0].credentials.secret;
-                }
-            }
+            return ''
         }
     }
 };

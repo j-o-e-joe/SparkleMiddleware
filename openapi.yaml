@@ -4,10 +4,10 @@ info:
   description: "This API is for uplaoding Cutwise data to IBM Cloud Object Storage. \n\n The following APIs are protected by IBM AppID. App ID leverages the OAuth 2.0 client credentials flow to protect communication.In the application authorization flow, the application is granted only an access token. It does not obtain an identity token or a refresh token.<br><br> The following shows an example request for obtaining the access token.<br><br> curl -X POST http://localhost:6002/oauth/v4/39a37f57-a227-4bfe-a044-93b6e6060b61/token -H 'Authorization: Basic base64Encoded{clientId:secret}' -H 'Content-Type:application/x-www-form-urlencoded' -d grant_type=client_credentials"
   version: 0.1.9
 servers:
-  - url: https://sparkle-pipeline.us-south.cf.appdomain.cloud
+  - url: https://sparklereleasecluster-0de26d204cce5ce3782ab0318a20cdb8-0000.us-south.containers.appdomain.cloud
     description: GIA Sparkle Server
 paths:
-  /api/uploadcutwise:
+  /middleware/uploadcutwise:
     post:
       summary: Upload image files in zip archive
       requestBody:
@@ -25,17 +25,38 @@ paths:
         '200':
           description: "Success: Zip package uploaded successfully"
         '401':
-          description: Not authenticated
-        '400':
-          description: "Missing ASET File<br>
-          Missing Top_White File<br>
-          Missing Top_White_Wireframe<br>
-          Missing Top_White_Wireframe File<br>
-          Missing Wireframe File<br>
-          Missing DF-Low File<br>
-          Missing DF-High File<br>
-          Missing DF File<br>
-          Missing ASC File"
+          description: "Not Authenticated"
+        '403':
+          description: "Invalid Upload"
+        '500':
+          description: "Server Error"
+  /middleware/uploadcisgo:
+    post:
+      summary: Upload image files in zip archive
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                controlnumber:
+                  type: string
+                cisgouser:
+                  type: string
+                cisgodevice:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      security:
+        - oAuth2ClientCredentials: [] 
+      responses:
+        '200':
+          description: "Success: Zip package uploaded successfully"
+        '401':
+          description: "Not Authenticated"
+        '403':
+          description: "Invalid Upload"
         '500':
           description: "Server Error"
 components: 
@@ -45,5 +66,6 @@ components:
       description: "See https://www.ibm.com/cloud/app-id"
       flows:
         clientCredentials:
-          tokenUrl: https://us-south.appid.cloud.ibm.com/oauth/v4/f5306e4e-6fda-4d11-87f3-f9646158260d/token
+          tokenUrl: https://us-south.appid.cloud.ibm.com/oauth/v4/38fa6c79-5f36-479c-993f-a8c8d78b8466/token"
+
 

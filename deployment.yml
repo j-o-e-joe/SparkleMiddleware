@@ -9,7 +9,7 @@
           app: sparklemiddleware
       ports:
           - protocol: "TCP"
-            port: 8080
+            port: 8088
             targetPort: 3000
   
 ---
@@ -33,24 +33,36 @@ spec:
           ports:
             - containerPort: 3000
           env:
-            - name: CISGOIMAGES
-              value: "cisgoimages-release"
-            - name: CUTWISEUPLOADS
-              value: "cutwiseuploads-release"
             - name: HELIUMUPLOADS
-              value: "heliumuploads-release"
+              value: "heliumuploads-rel"
             - name: HELIUMWIREFRAMES
-              value: "heliumwireframes-release"
+              value: "heliumwireframes-rel"
+            - name: CISGOFANCYUPLOADS
+              value: "cisgofancyuploads-rel"
+            - name: CISGOUPLOADS
+              value: "cisgouploads-rel"
+            - name: CISGOZIPUPLOADS
+              value: "cisgozipuploads-rel"
+            - name: DIBOXFANCYUPLOADS
+              value: "diboxfancyuploads-rel"
+            - name: DIBOXUPLOADS
+              value: "diboxuploads-rel"         
+            - name: CUTWISEZIPUPLOADS
+              value: "cutwisezipuploads-rel"
             - name: SPARKLEPLOTS
-              value: "sparkleplots-release"
+              value: "sparkleplots-rel"
             - name: SPARKLETABLEDATA
-              value: "sparkletabledata-release"
-            - name: SPARKLETRAININGCLARITY
-              value: "sparkletrainingclarity-release"
-            - name: SPARKLETRAININGINCLUSIONS
-              value: "sparkletraininginclusions-release"
-            - name: SPARKLETRAININGWIREFRAME
-              value: "sparkletrainingwireframe-release"
+              value: "sparkletabledata-rel"
+            - name: C-MODELS
+              value: "c-models-rel"
+            - name: I-MODELS
+              value: "i-models-rel"
+            - name: F-MODELS
+              value: "f-models-rel"
+            - name: AR-MODELS
+              value: "ar-models-rel"
+            - name: WIREFRAME-MODELS
+              value: "wireframe-models-rel"
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
@@ -66,16 +78,16 @@ spec:
                 secretKeyRef:
                   name: deployment-secret
                   key: CLOUDANT_ACCOUNT_URL
-            - name: CLOUDANT_USERNAME 
+            - name: CLOUDANT_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: deployment-secret
-                  key: CLOUDANT_USERNAME
-            - name: CLOUDANT_PASSWORD 
+                  key: CLOUDANT_API_KEY
+            - name: CLOUDANT_ACCOUNT_NAME
               valueFrom:
                 secretKeyRef:
                   name: deployment-secret
-                  key: CLOUDANT_PASSWORD
+                  key: CLOUDANT_ACCOUNT_NAME
             - name: COS_AUTH_ENDPOINT
               valueFrom:
                 secretKeyRef:
@@ -121,6 +133,11 @@ spec:
                 secretKeyRef:
                   name: deployment-secret
                   key: APPID_CUTWISE_OAUTHSERVERURL
+            - name: APPID_REDIRECTURL
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: APPID_REDIRECTURL
             - name: RABBITMQ_CONNECTION
               valueFrom:
                 secretKeyRef:
@@ -141,5 +158,10 @@ spec:
                 secretKeyRef:
                   name: deployment-secret
                   key: RABBITMQ_PORT
+            - name: RABBITMQ_BINDING
+              valueFrom:
+                secretKeyRef:
+                  name: deployment-secret
+                  key: RABBITMQ_BINDING
         nodeSelector:
-          node: 10.220.196.207
+          node: 10.221.145.91
